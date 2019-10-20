@@ -1,6 +1,7 @@
 package com.badoo.reaktive.maybe
 
 import com.badoo.reaktive.disposable.Disposable
+import com.badoo.reaktive.disposable.disposable
 import com.badoo.reaktive.test.base.assertDisposed
 import com.badoo.reaktive.test.maybe.DefaultMaybeObserver
 import com.badoo.reaktive.test.maybe.TestMaybe
@@ -73,7 +74,7 @@ class DoOnBeforeSubscribeTest
 
         maybeUnsafe<Nothing> { observer ->
             isCalled.value = false
-            observer.onSubscribe(Disposable())
+            observer.onSubscribe(disposable())
         }
             .doOnBeforeSubscribe {
                 isCalled.value = true

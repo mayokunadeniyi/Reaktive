@@ -8,6 +8,7 @@ import com.badoo.reaktive.base.tryCatch
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.disposable.DisposableWrapper
+import com.badoo.reaktive.disposable.disposable
 import com.badoo.reaktive.disposable.doIfNotDisposed
 import com.badoo.reaktive.utils.handleSourceError
 
@@ -113,7 +114,7 @@ fun <T> Single<T>.doOnBeforeDispose(action: () -> Unit): Single<T> =
         observer.onSubscribe(disposables)
 
         disposables +=
-            Disposable {
+            disposable {
                 try {
                     action()
                 } catch (e: Throwable) {
@@ -153,7 +154,7 @@ fun <T> Single<T>.doOnBeforeFinally(action: () -> Unit): Single<T> =
         observer.onSubscribe(disposables)
 
         disposables +=
-            Disposable {
+            disposable {
                 try {
                     action()
                 } catch (e: Throwable) {

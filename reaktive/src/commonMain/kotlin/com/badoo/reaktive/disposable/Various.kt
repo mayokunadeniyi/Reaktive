@@ -1,7 +1,6 @@
 package com.badoo.reaktive.disposable
 
 import com.badoo.reaktive.utils.atomic.AtomicBoolean
-import kotlin.js.JsName
 
 inline fun disposable(crossinline onDispose: () -> Unit = {}): Disposable =
     object : Disposable {

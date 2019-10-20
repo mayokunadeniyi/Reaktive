@@ -10,6 +10,7 @@ import com.badoo.reaktive.completable.CompletableCallbacks
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.disposable.DisposableWrapper
+import com.badoo.reaktive.disposable.disposable
 import com.badoo.reaktive.disposable.doIfNotDisposed
 import com.badoo.reaktive.utils.handleSourceError
 
@@ -142,7 +143,7 @@ fun <T> Maybe<T>.doOnBeforeDispose(action: () -> Unit): Maybe<T> =
         observer.onSubscribe(disposables)
 
         disposables +=
-            Disposable {
+            disposable {
                 try {
                     action()
                 } catch (e: Throwable) {
@@ -186,7 +187,7 @@ fun <T> Maybe<T>.doOnBeforeFinally(action: () -> Unit): Maybe<T> =
         observer.onSubscribe(disposables)
 
         disposables +=
-            Disposable {
+            disposable {
                 try {
                     action()
                 } catch (e: Throwable) {
