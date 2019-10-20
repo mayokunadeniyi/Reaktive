@@ -9,9 +9,6 @@ import kotlin.js.JsName
 @JsName("disposableDeprecated")
 inline fun disposable(crossinline onDispose: () -> Unit = {}): Disposable = Disposable(onDispose)
 
-        override fun dispose() {
-            if (_isDisposed.compareAndSet(false, true)) {
-                onDispose()
-            }
-        }
-    }
+expect inline fun Disposable(crossinline onDispose: () -> Unit): Disposable
+
+expect fun Disposable(): Disposable
