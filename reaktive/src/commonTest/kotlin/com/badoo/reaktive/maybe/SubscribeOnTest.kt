@@ -7,12 +7,13 @@ import com.badoo.reaktive.test.maybe.assertComplete
 import com.badoo.reaktive.test.maybe.assertSuccess
 import com.badoo.reaktive.test.maybe.test
 import com.badoo.reaktive.test.scheduler.TestScheduler
+import com.badoo.reaktive.test.scheduler.assertAllExecutorsDisposed
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SubscribeOnTest
-    : MaybeToMaybeTests by MaybeToMaybeTests({ subscribeOn(TestScheduler()) }) {
+    : MaybeToMaybeTests by MaybeToMaybeTestsImpl({ subscribeOn(TestScheduler()) }) {
 
     private val scheduler = TestScheduler(isManualProcessing = true)
     private val upstream = TestMaybe<Int?>()
@@ -71,6 +72,6 @@ class SubscribeOnTest
     fun disposes_executor_WHEN_disposed() {
         observer.dispose()
 
-        assertTrue(scheduler.executors.all(TestScheduler.Executor::isDisposed))
+        scheduler.assertAllExecutorsDisposed()
     }
 }

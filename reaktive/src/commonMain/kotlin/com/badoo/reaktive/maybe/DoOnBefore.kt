@@ -11,7 +11,8 @@ import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.disposable.DisposableWrapper
 import com.badoo.reaktive.disposable.doIfNotDisposed
-import com.badoo.reaktive.utils.handleSourceError
+import com.badoo.reaktive.disposable.plusAssign
+import com.badoo.reaktive.utils.handleReaktiveError
 
 fun <T> Maybe<T>.doOnBeforeSubscribe(action: (Disposable) -> Unit): Maybe<T> =
     maybeUnsafe { observer ->
@@ -56,7 +57,7 @@ fun <T> Maybe<T>.doOnBeforeSubscribe(action: (Disposable) -> Unit): Maybe<T> =
 
 fun <T> Maybe<T>.doOnBeforeSuccess(consumer: (T) -> Unit): Maybe<T> =
     maybe { emitter ->
-        subscribeSafe(
+        subscribe(
             object : MaybeObserver<T>, CompletableCallbacks by emitter {
                 override fun onSubscribe(disposable: Disposable) {
                     emitter.setDisposable(disposable)
@@ -64,7 +65,7 @@ fun <T> Maybe<T>.doOnBeforeSuccess(consumer: (T) -> Unit): Maybe<T> =
 
                 override fun onSuccess(value: T) {
                     if (!emitter.isDisposed) {
-                        emitter.tryCatch({ consumer(value) }) {
+                        emitter.tryCatch(block = { consumer(value) }) {
                             emitter.onSuccess(value)
                         }
                     }
@@ -75,14 +76,14 @@ fun <T> Maybe<T>.doOnBeforeSuccess(consumer: (T) -> Unit): Maybe<T> =
 
 fun <T> Maybe<T>.doOnBeforeComplete(action: () -> Unit): Maybe<T> =
     maybe { emitter ->
-        subscribeSafe(
+        subscribe(
             object : MaybeObserver<T>, SuccessCallback<T> by emitter, ErrorCallback by emitter {
                 override fun onSubscribe(disposable: Disposable) {
                     emitter.setDisposable(disposable)
                 }
 
                 override fun onComplete() {
-                    tryCatch(action) {
+                    emitter.tryCatch(action) {
                         emitter.onComplete()
                     }
                 }
@@ -92,7 +93,7 @@ fun <T> Maybe<T>.doOnBeforeComplete(action: () -> Unit): Maybe<T> =
 
 fun <T> Maybe<T>.doOnBeforeError(consumer: (Throwable) -> Unit): Maybe<T> =
     maybe { emitter ->
-        subscribeSafe(
+        subscribe(
             object : MaybeObserver<T>, SuccessCallback<T> by emitter, CompleteCallback by emitter {
                 override fun onSubscribe(disposable: Disposable) {
                     emitter.setDisposable(disposable)
@@ -109,7 +110,7 @@ fun <T> Maybe<T>.doOnBeforeError(consumer: (Throwable) -> Unit): Maybe<T> =
 
 fun <T> Maybe<T>.doOnBeforeTerminate(action: () -> Unit): Maybe<T> =
     maybe { emitter ->
-        subscribeSafe(
+        subscribe(
             object : MaybeObserver<T> {
                 override fun onSubscribe(disposable: Disposable) {
                     emitter.setDisposable(disposable)
@@ -146,7 +147,7 @@ fun <T> Maybe<T>.doOnBeforeDispose(action: () -> Unit): Maybe<T> =
                 try {
                     action()
                 } catch (e: Throwable) {
-                    handleSourceError(e) // Can't send error to downstream, already disposed
+                    handleReaktiveError(e) // Can't send error to downstream, already disposed
                 }
             }
 
@@ -190,7 +191,7 @@ fun <T> Maybe<T>.doOnBeforeFinally(action: () -> Unit): Maybe<T> =
                 try {
                     action()
                 } catch (e: Throwable) {
-                    handleSourceError(e) // Can't send error to downstream, already disposed
+                    handleReaktiveError(e) // Can't send error to downstream, already disposed
                 }
             }
 

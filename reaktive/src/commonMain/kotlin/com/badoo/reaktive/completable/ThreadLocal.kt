@@ -1,20 +1,20 @@
 package com.badoo.reaktive.completable
 
 import com.badoo.reaktive.base.exceptions.CompositeException
-import com.badoo.reaktive.base.subscribeSafe
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
-import com.badoo.reaktive.utils.ThreadLocalStorage
-import com.badoo.reaktive.utils.handleSourceError
+import com.badoo.reaktive.disposable.plusAssign
+import com.badoo.reaktive.utils.ThreadLocalDisposableHolder
+import com.badoo.reaktive.utils.handleReaktiveError
 
 fun Completable.threadLocal(): Completable =
     completable {
         val disposables = CompositeDisposable()
         it.setDisposable(disposables)
-        val emitterStorage = ThreadLocalStorage(it)
+        val emitterStorage = ThreadLocalDisposableHolder(it)
         disposables += emitterStorage
 
-        subscribeSafe(
+        subscribe(
             object : CompletableObserver {
                 override fun onSubscribe(disposable: Disposable) {
                     disposables += disposable
@@ -32,7 +32,7 @@ fun Completable.threadLocal(): Completable =
                     try {
                         requireNotNull(emitterStorage.get())
                     } catch (e: Throwable) {
-                        handleSourceError(if (existingError == null) e else CompositeException(existingError, e))
+                        handleReaktiveError(if (existingError == null) e else CompositeException(existingError, e))
                         null
                     }
             }

@@ -10,8 +10,14 @@ internal open class DefaultSubject<T> : Subject<T> {
 
     private val observers = SharedList<ObservableObserver<T>>()
     private val serializer = serializer(onValue = ::onSerializedValue)
+
     private val _status = AtomicReference<Subject.Status>(Subject.Status.Active)
-    override val status: Subject.Status get() = _status.value
+    override var status: Subject.Status
+        get() = _status.value
+        protected set(value) {
+            _status.value = value
+            onStatusChanged(value)
+        }
 
     override fun subscribe(observer: ObservableObserver<T>) {
         serializer.accept(Event.OnSubscribe(observer))
@@ -29,42 +35,37 @@ internal open class DefaultSubject<T> : Subject<T> {
         serializer.accept(Event.OnError(error))
     }
 
-    open fun onAfterSubscribe(observer: ObservableObserver<T>) {
+    protected open fun onSubscribed(observer: ObservableObserver<T>): Boolean = true
+
+    protected open fun onAfterSubscribe(observer: ObservableObserver<T>) {
     }
 
-    open fun onBeforeNext(value: T) {
+    protected open fun onAfterUnsubscribe(observer: ObservableObserver<T>) {
     }
 
-    private fun onSerializedValue(value: Any?): Boolean =
+    protected open fun onBeforeNext(value: T) {
+    }
+
+    protected open fun onStatusChanged(status: Subject.Status) {
+    }
+
+    private fun onSerializedValue(value: Any?): Boolean {
         if (value is Event<*>) {
             @Suppress("UNCHECKED_CAST") // Either Event<T> or T, to avoid unnecessary allocations
             val event = value as Event<T>
             when (event) {
-                is Event.OnSubscribe -> {
-                    onSerializedSubscribe(event.observer)
-                    true
-                }
-
-                is Event.OnUnsubscribe -> {
-                    onSerializedUnsubscribe(event.observer)
-                    true
-                }
-
-                is Event.OnComplete -> {
-                    onSerializedComplete()
-                    false
-                }
-
-                is Event.OnError -> {
-                    onSerializedError(event.error)
-                    false
-                }
+                is Event.OnSubscribe -> onSerializedSubscribe(event.observer)
+                is Event.OnUnsubscribe -> onSerializedUnsubscribe(event.observer)
+                is Event.OnComplete -> onSerializedComplete()
+                is Event.OnError -> onSerializedError(event.error)
             }
         } else {
             @Suppress("UNCHECKED_CAST") // Either Event<T> or T, to avoid unnecessary allocations
             onSerializedNext(value as T)
-            true
         }
+
+        return true
+    }
 
     private fun onSerializedSubscribe(observer: ObservableObserver<T>) {
         val disposable = Disposable { serializer.accept(Event.OnUnsubscribe(observer)) }
@@ -72,6 +73,10 @@ internal open class DefaultSubject<T> : Subject<T> {
         observer.onSubscribe(disposable)
 
         if (disposable.isDisposed) {
+            return
+        }
+
+        if (!onSubscribed(observer)) {
             return
         }
 
@@ -99,24 +104,28 @@ internal open class DefaultSubject<T> : Subject<T> {
 
     private fun onSerializedUnsubscribe(observer: ObservableObserver<T>) {
         observers -= observer
+        onAfterUnsubscribe(observer)
     }
 
     private fun onSerializedNext(value: T) {
-        onBeforeNext(value)
-
-        observers.forEach { it.onNext(value) }
+        if (isActive) {
+            onBeforeNext(value)
+            observers.forEach { it.onNext(value) }
+        }
     }
 
     private fun onSerializedComplete() {
-        _status.value = Subject.Status.Completed
-
-        observers.forEach(ObservableObserver<*>::onComplete)
+        if (isActive) {
+            status = Subject.Status.Completed
+            observers.forEach(ObservableObserver<*>::onComplete)
+        }
     }
 
     private fun onSerializedError(error: Throwable) {
-        _status.value = Subject.Status.Error(error)
-
-        observers.forEach { it.onError(error) }
+        if (isActive) {
+            status = Subject.Status.Error(error)
+            observers.forEach { it.onError(error) }
+        }
     }
 
     private sealed class Event<out T> {

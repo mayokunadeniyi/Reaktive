@@ -7,9 +7,11 @@ import com.badoo.reaktive.test.base.hasSubscribers
 import com.badoo.reaktive.test.observable.TestObservable
 import com.badoo.reaktive.test.observable.assertComplete
 import com.badoo.reaktive.test.observable.assertNoValues
+import com.badoo.reaktive.test.observable.assertNotComplete
 import com.badoo.reaktive.test.observable.assertValues
 import com.badoo.reaktive.test.observable.onNext
 import com.badoo.reaktive.test.observable.test
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -80,7 +82,7 @@ interface PublishGenericTests {
     fun unsubscribes_from_upstream_WHEN_disconnected()
 
     @Test
-    fun completes_all_observers_WHEN_disconnected()
+    fun does_not_complete_any_observer_WHEN_disconnected()
 
     @Test
     fun does_not_complete_new_observers_WHEN_reconnected_and_disconnected_from_old_again()
@@ -95,10 +97,16 @@ interface PublishGenericTests {
     fun multicasts_error_to_all_observers_WHEN_connected_and_upstream_produced_error()
 }
 
-class PublishGenericTestsImpl : PublishGenericTests {
+@Ignore
+class PublishGenericTestsImpl(
+    transform: Observable<Int?>.() -> ConnectableObservable<Int?>
+) : PublishGenericTests {
+
+    @Deprecated("Just to fix complilation issues")
+    constructor() : this({ throw UnsupportedOperationException() })
 
     private val upstream = TestObservable<Int?>()
-    private val publish = upstream.publish()
+    private val publish = upstream.transform()
 
     @Test
     override fun does_not_subscribe_to_upstream_WHEN_subscribed_and_not_connected() {
@@ -280,15 +288,14 @@ class PublishGenericTestsImpl : PublishGenericTests {
         assertFalse(upstream.hasSubscribers)
     }
 
-    @Test
-    override fun completes_all_observers_WHEN_disconnected() {
+    override fun does_not_complete_any_observer_WHEN_disconnected() {
         val observer1 = publish.test()
         val observer2 = publish.test()
 
         publish.connectAndGetDisposable().dispose()
 
-        observer1.assertComplete()
-        observer2.assertComplete()
+        observer1.assertNotComplete()
+        observer2.assertNotComplete()
     }
 
     @Test

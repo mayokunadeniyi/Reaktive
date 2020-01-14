@@ -11,10 +11,9 @@ class TestMaybeObserver<T>(autoFreeze: Boolean = true) : TestObserver(), MaybeOb
     private val _value = AtomicReference<Value<T>?>(null)
 
     val value: T
-        get() {
-            assertSuccess()
-            return _value.value!!.value
-        }
+        get() =
+            requireNotNull(_value.value) { "Maybe did not success. Assert that with 'assertSuccess()' before accessing the 'value'." }
+                .value
 
     val isSuccess: Boolean get() = _value.value != null
     private val _isComplete = AtomicBoolean()
@@ -49,7 +48,7 @@ class TestMaybeObserver<T>(autoFreeze: Boolean = true) : TestObserver(), MaybeOb
         super.checkActive()
 
         check(!isSuccess) { "Already succeeded" }
-        check(!isComplete) { "Already complete" }
+        check(!isComplete) { "Already completed" }
     }
 
     private class Value<T>(val value: T)

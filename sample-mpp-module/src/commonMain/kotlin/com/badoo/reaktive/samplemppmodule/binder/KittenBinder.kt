@@ -1,16 +1,19 @@
 package com.badoo.reaktive.samplemppmodule.binder
 
-import com.badoo.reaktive.disposable.CompositeDisposable
+
+import com.badoo.reaktive.annotations.ExperimentalReaktiveApi
+import com.badoo.reaktive.disposable.scope.DisposableScope
+import com.badoo.reaktive.disposable.scope.disposableScope
 import com.badoo.reaktive.observable.map
-import com.badoo.reaktive.observable.subscribe
 import com.badoo.reaktive.samplemppmodule.store.KittenStoreBuilder
 import com.badoo.reaktive.samplemppmodule.view.KittenView
 
+@UseExperimental(ExperimentalReaktiveApi::class)
 class KittenBinder(
     storeBuilder: KittenStoreBuilder
 ) {
 
-    private var disposables = CompositeDisposable()
+    private var startStopScope: DisposableScope? = null
     private val store = storeBuilder.build()
     private var view: KittenView? = null
 
@@ -19,21 +22,24 @@ class KittenBinder(
     }
 
     fun onStart() {
-        disposables +=
-            requireNotNull(view)
-                .events
-                .map(KittenViewEventToIntentMapper::invoke)
-                .subscribe(onNext = store::accept)
+        startStopScope = disposableScope { start() }
+    }
 
-        disposables +=
-            store
-                .states
-                .map(KittenStateToViewModelMapper::invoke)
-                .subscribe(onNext = { requireNotNull(view).show(it) })
+    private fun DisposableScope.start() {
+        requireNotNull(view)
+            .events
+            .map(KittenViewEventToIntentMapper::invoke)
+            .subscribeScoped(onNext = store::accept)
+
+        store
+            .states
+            .map(KittenStateToViewModelMapper::invoke)
+            .subscribeScoped(onNext = { requireNotNull(view).show(it) })
     }
 
     fun onStop() {
-        disposables.clear()
+        startStopScope?.dispose()
+        startStopScope = null
     }
 
     fun onViewDestroyed() {

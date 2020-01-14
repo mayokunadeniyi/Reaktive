@@ -1,8 +1,10 @@
 package com.badoo.reaktive.completable
 
 import com.badoo.reaktive.base.exceptions.CompositeException
+import com.badoo.reaktive.test.base.assertError
 import com.badoo.reaktive.test.base.hasSubscribers
 import com.badoo.reaktive.test.completable.TestCompletable
+import com.badoo.reaktive.test.completable.assertComplete
 import com.badoo.reaktive.test.completable.test
 import com.badoo.reaktive.utils.atomic.AtomicInt
 import com.badoo.reaktive.utils.atomic.AtomicReference
@@ -12,7 +14,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-class RetryTest : CompletableToCompletableTests by CompletableToCompletableTests({ retry() }) {
+class RetryTest : CompletableToCompletableTests by CompletableToCompletableTestsImpl({ retry() }) {
 
     private val upstream = TestCompletable()
 
@@ -47,7 +49,7 @@ class RetryTest : CompletableToCompletableTests by CompletableToCompletableTests
         val observer = upstream.retry { _, _ -> false }.test()
         val throwable = Throwable()
         upstream.onError(throwable)
-        assertSame(observer.error, throwable)
+        observer.assertError(throwable)
     }
 
     @Test
@@ -55,7 +57,7 @@ class RetryTest : CompletableToCompletableTests by CompletableToCompletableTests
         val observer = upstream.retry().test()
         upstream.onError(Throwable())
         upstream.onComplete()
-        assertTrue(observer.isComplete)
+        observer.assertComplete()
     }
 
     @Test

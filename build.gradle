@@ -1,10 +1,7 @@
 buildscript {
-    ext.reaktive_version = '1.0.1'
+    ext.reaktive_version = '1.1.8'
     ext.reaktive_group_id = 'com.badoo.reaktive'
 }
-
-apply from: 'gradle/versions.gradle.kts'
-apply from: 'gradle/versions.gradle'
 
 allprojects {
     repositories {
@@ -25,14 +22,14 @@ void setupMultiplatformLibrary(Project project) {
         sourceSets {
             commonMain {
                 dependencies {
-                    implementation kotlin('stdlib-common')
+                    implementation Deps.kotlin.stdlib.common
                 }
             }
 
             commonTest {
                 dependencies {
-                    implementation kotlin('test-common')
-                    implementation kotlin('test-annotations-common')
+                    implementation Deps.kotlin.test.common
+                    implementation Deps.kotlin.test.annotationsCommon
                 }
             }
         }
@@ -41,15 +38,13 @@ void setupMultiplatformLibrary(Project project) {
 
 void setupAllTargetsWithDefaultSourceSets(Map parameters) {
     setupAllTargetsWithDefaultSourceSets(
-        parameters['project'],
-        parameters.getOrDefault('isLinuxArm32HfpEnabled', true)
+            parameters['project'],
+            parameters.getOrDefault('isLinuxArm32HfpEnabled', true)
     )
 }
 
 void setupAllTargetsWithDefaultSourceSets(Project project, Boolean isLinuxArm32HfpEnabled = true) {
-    final target = Target.currentTarget()
-
-    if (target.isCommon() || target.isMeta()) {
+    if (Target.shouldDefineTarget(project, Target.ALL_LINUX_HOSTED)) {
         setupAndroidTarget(project)
         setupJvmTarget(project)
         setupJsTarget(project)
@@ -97,7 +92,7 @@ void setupAllTargetsWithDefaultSourceSets(Project project, Boolean isLinuxArm32H
         }
     }
 
-    if (target.isIos() || target.isMeta()) {
+    if (Target.shouldDefineTarget(project, Target.ALL_MACOS_HOSTED)) {
         setupIosTargets(project)
 
         project.kotlin {
@@ -108,31 +103,54 @@ void setupAllTargetsWithDefaultSourceSets(Project project, Boolean isLinuxArm32H
                 nativeCommonMain.dependsOn jvmNativeCommonMain
                 nativeCommonTest.dependsOn jvmNativeCommonTest
 
-                iosCommonMain.dependsOn nativeCommonMain
-                iosCommonTest.dependsOn nativeCommonTest
+                darwinCommonMain.dependsOn nativeCommonMain
+                darwinCommonTest.dependsOn nativeCommonTest
 
-                ios32Main.dependsOn iosCommonMain
-                ios32Test.dependsOn iosCommonTest
+                watchosArm32Main.dependsOn darwinCommonMain
+                watchosArm32Test.dependsOn darwinCommonTest
 
-                ios64Main.dependsOn iosCommonMain
-                ios64Test.dependsOn iosCommonTest
+                watchosArm64Main.dependsOn darwinCommonMain
+                watchosArm64Test.dependsOn darwinCommonTest
 
-                iosSimMain.dependsOn iosCommonMain
-                iosSimTest.dependsOn iosCommonTest
+                watchosSimMain.dependsOn darwinCommonMain
+                watchosSimTest.dependsOn darwinCommonTest
+
+                tvosArm64Main.dependsOn darwinCommonMain
+                tvosArm64Test.dependsOn darwinCommonTest
+
+                tvosSimMain.dependsOn darwinCommonMain
+                tvosSimTest.dependsOn darwinCommonTest
+
+                macosX64Main.dependsOn darwinCommonMain
+                macosX64Test.dependsOn darwinCommonTest
+
+                ios32Main.dependsOn darwinCommonMain
+                ios32Test.dependsOn darwinCommonTest
+
+                ios64Main.dependsOn darwinCommonMain
+                ios64Test.dependsOn darwinCommonTest
+
+                iosSimMain.dependsOn darwinCommonMain
+                iosSimTest.dependsOn darwinCommonTest
             }
         }
     }
 }
 
 private void setupAndroidTarget(Project project) {
+    if (!Target.shouldDefineTarget(project, Target.JVM)) {
+        return
+    }
+
     project.apply plugin: 'com.android.library'
 
     project.android {
-        buildToolsVersion '28.0.3'
-        compileSdkVersion 28
+        buildToolsVersion '29.0.2'
+        compileSdkVersion 29
 
         defaultConfig {
             minSdkVersion 1
+            targetSdkVersion 29
         }
     }
 
@@ -142,13 +160,13 @@ private void setupAndroidTarget(Project project) {
         sourceSets {
             androidMain {
                 dependencies {
-                    implementation kotlin('stdlib')
+                    implementation Deps.kotlin.stdlib
                 }
             }
 
             androidTest {
                 dependencies {
-                    implementation kotlin('test-junit')
+                    implementation Deps.kotlin.test.junit
                 }
             }
         }
@@ -160,19 +178,23 @@ private void setupAndroidTarget(Project project) {
 }
 
 private void setupJvmTarget(Project project) {
+    if (!Target.shouldDefineTarget(project, Target.JVM)) {
+        return
+    }
+
     project.kotlin {
         targets.fromPreset(presets.jvm, 'jvm')
 
         sourceSets {
             jvmMain {
                 dependencies {
-                    implementation kotlin('stdlib')
+                    implementation Deps.kotlin.stdlib
                 }
             }
 
             jvmTest {
                 dependencies {
-                    implementation kotlin('test-junit')
+                    implementation Deps.kotlin.test.junit
                 }
             }
         }
@@ -185,6 +207,10 @@ private void setupJsTarget(Project project) {
 }
 
 private void setupLinuxX64Target(Project project) {
+    if (!Target.shouldDefineTarget(project, Target.LINUX)) {
+        return
+    }
+
     project.kotlin {
         targets {
             fromPreset(presets.linuxX64, 'linuxX64')
@@ -193,6 +219,10 @@ private void setupLinuxX64Target(Project project) {
 }
 
 private void setupLinuxArm32HfpTarget(Project project) {
+    if (!Target.shouldDefineTarget(project, Target.LINUX)) {
+        return
+    }
+
     project.kotlin {
         targets {
             fromPreset(presets.linuxArm32Hfp, 'linuxArm32Hfp')
@@ -201,13 +231,5 @@ private void setupLinuxArm32HfpTarget(Project project) {
 }
 
 private void setupIosTargets(Project project) {
-    project.apply plugin: IosPlugin
-}
-
-import tasks.BuildIosSampleTask
-
-if (Target.currentTarget().isIos()) {
-    tasks.register('buildIosSample', BuildIosSampleTask) {
-        dependsOn ':sample-mpp-module:linkReleaseFrameworkIosSim'
-    }
+    project.apply plugin: DarwinPlugin
 }

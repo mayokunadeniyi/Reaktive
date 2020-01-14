@@ -4,6 +4,7 @@ import com.badoo.reaktive.test.base.assertError
 import com.badoo.reaktive.test.base.assertNotError
 import com.badoo.reaktive.test.base.hasSubscribers
 import com.badoo.reaktive.test.scheduler.TestScheduler
+import com.badoo.reaktive.test.scheduler.assertAllExecutorsDisposed
 import com.badoo.reaktive.test.single.TestSingle
 import com.badoo.reaktive.test.single.assertNotSuccess
 import com.badoo.reaktive.test.single.assertSuccess
@@ -11,7 +12,7 @@ import com.badoo.reaktive.test.single.test
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class ObserveOnTest : SingleToSingleTests by SingleToSingleTests({ observeOn(TestScheduler()) }) {
+class ObserveOnTest : SingleToSingleTests by SingleToSingleTestsImpl({ observeOn(TestScheduler()) }) {
 
     private val scheduler = TestScheduler(isManualProcessing = true)
     private val upstream = TestSingle<Int>()
@@ -57,6 +58,6 @@ class ObserveOnTest : SingleToSingleTests by SingleToSingleTests({ observeOn(Tes
     fun disposes_executor_WHEN_disposed() {
         observer.dispose()
 
-        assertTrue(scheduler.executors.all(TestScheduler.Executor::isDisposed))
+        scheduler.assertAllExecutorsDisposed()
     }
 }

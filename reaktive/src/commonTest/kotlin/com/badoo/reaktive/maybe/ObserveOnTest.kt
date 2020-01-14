@@ -10,11 +10,12 @@ import com.badoo.reaktive.test.maybe.assertNotSuccess
 import com.badoo.reaktive.test.maybe.assertSuccess
 import com.badoo.reaktive.test.maybe.test
 import com.badoo.reaktive.test.scheduler.TestScheduler
+import com.badoo.reaktive.test.scheduler.assertAllExecutorsDisposed
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class ObserveOnTest
-    : MaybeToMaybeTests by MaybeToMaybeTests({ observeOn(TestScheduler()) }) {
+    : MaybeToMaybeTests by MaybeToMaybeTestsImpl({ observeOn(TestScheduler()) }) {
 
     private val scheduler = TestScheduler(isManualProcessing = true)
     private val upstream = TestMaybe<Int?>()
@@ -83,6 +84,6 @@ class ObserveOnTest
     fun disposes_executor_WHEN_disposed() {
         observer.dispose()
 
-        assertTrue(scheduler.executors.all(TestScheduler.Executor::isDisposed))
+        scheduler.assertAllExecutorsDisposed()
     }
 }

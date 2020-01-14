@@ -7,12 +7,13 @@ import com.badoo.reaktive.test.observable.assertComplete
 import com.badoo.reaktive.test.observable.assertValues
 import com.badoo.reaktive.test.observable.test
 import com.badoo.reaktive.test.scheduler.TestScheduler
+import com.badoo.reaktive.test.scheduler.assertAllExecutorsDisposed
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SubscribeOnTest
-    : ObservableToObservableTests by ObservableToObservableTests<Unit>({ subscribeOn(TestScheduler()) }) {
+    : ObservableToObservableTests by ObservableToObservableTestsImpl({ subscribeOn(TestScheduler()) }) {
 
     private val scheduler = TestScheduler(isManualProcessing = true)
     private val upstream = TestObservable<Int?>()
@@ -64,6 +65,6 @@ class SubscribeOnTest
     fun disposes_executor_WHEN_disposed() {
         observer.dispose()
 
-        assertTrue(scheduler.executors.all(TestScheduler.Executor::isDisposed))
+        scheduler.assertAllExecutorsDisposed()
     }
 }

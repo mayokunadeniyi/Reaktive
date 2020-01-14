@@ -1,15 +1,14 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
-    buildToolsVersion '28.0.3'
-    compileSdkVersion 28
+    buildToolsVersion '29.0.2'
+    compileSdkVersion 29
 
     defaultConfig {
         applicationId 'com.badoo.reaktive.sample.android'
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName '1.0'
     }
@@ -17,13 +16,13 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation deps.appcompatV7
-    implementation deps.constraintLayout
-    implementation deps.exifinterface
+    implementation Deps.kotlin.stdlib.jdk7
+    implementation Deps.android.androidx.appcompat
+    implementation Deps.android.androidx.constraintLayout
+    implementation Deps.android.androidx.exifinterface
     implementation project(':reaktive')
     implementation project(':reaktive-testing')
     implementation project(':rxjava2-interop')
     implementation project(':sample-mpp-module')
-    implementation deps.picasso
+    implementation Deps.picasso
 }

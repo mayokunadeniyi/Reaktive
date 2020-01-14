@@ -56,17 +56,25 @@ interface SubjectGenericTests {
     @Test
     fun does_not_emit_values_to_unsubscribed_observers()
 
+    @Test
+    fun completes_WHEN_subscribed_after_completion()
+
+    @Test
+    fun produces_error_WHEN_subscribed_after_error()
+
     companion object {
-        operator fun invoke(subject: Subject<Int?>): SubjectGenericTests = SubjectGenericTestsImpl(subject)
+        operator fun invoke(subject: Subject<Int?>, subscriberCount: Int = 5): SubjectGenericTests =
+            SubjectGenericTestsImpl(subject, subscriberCount)
     }
 }
 
 private class SubjectGenericTestsImpl(
-    private val subject: Subject<Int?>
+    private val subject: Subject<Int?>,
+    private val subscriberCount: Int
 ) : SubjectGenericTests {
 
     override fun broadcasts_values_to_all_observers() {
-        val observers = List(5) { subject.test() }
+        val observers = List(subscriberCount) { subject.test() }
         observers.forEach(TestObservableObserver<*>::reset)
         subject.onNext(0)
         subject.onNext(null)
@@ -110,7 +118,7 @@ private class SubjectGenericTestsImpl(
     }
 
     override fun completes_all_observers_WHEN_completed() {
-        val observers = List(5) { subject.test() }
+        val observers = List(subscriberCount) { subject.test() }
         subject.onNext(0)
         subject.onComplete()
 
@@ -118,7 +126,7 @@ private class SubjectGenericTestsImpl(
     }
 
     override fun delivers_error_to_all_observers_WHEN_error_produced() {
-        val observers = List(5) { subject.test() }
+        val observers = List(subscriberCount) { subject.test() }
         val error = Throwable()
         subject.onNext(0)
         subject.onError(error)
@@ -200,5 +208,20 @@ private class SubjectGenericTestsImpl(
         val observer = subject.test()
         observer.dispose()
         subject.onNext(0)
+    }
+
+    override fun completes_WHEN_subscribed_after_completion() {
+        subject.onComplete()
+        val observer = subject.test()
+
+        observer.assertComplete()
+    }
+
+    override fun produces_error_WHEN_subscribed_after_error() {
+        val error = Throwable()
+        subject.onError(error)
+        val observer = subject.test()
+
+        observer.assertError(error)
     }
 }
