@@ -1,6 +1,5 @@
 package com.badoo.reaktive.samplemppmodule.store
 
-
 import com.badoo.reaktive.annotations.ExperimentalReaktiveApi
 import com.badoo.reaktive.disposable.scope.DisposableScope
 import com.badoo.reaktive.observable.Observable
@@ -13,8 +12,7 @@ import com.badoo.reaktive.single.observeOn
 import com.badoo.reaktive.subject.behavior.BehaviorSubject
 import com.badoo.reaktive.utils.ensureNeverFrozen
 
-
-@UseExperimental(ExperimentalReaktiveApi::class)
+@OptIn(ExperimentalReaktiveApi::class)
 internal class KittenStoreImpl(
     private val loader: KittenLoader
 ) : KittenStore, DisposableScope by DisposableScope() {

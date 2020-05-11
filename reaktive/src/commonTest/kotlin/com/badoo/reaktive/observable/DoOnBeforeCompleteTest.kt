@@ -10,8 +10,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-class DoOnBeforeCompleteTest
-    : ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeComplete {} }) {
+class DoOnBeforeCompleteTest :
+    ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeComplete {} }),
+    ObservableToObservableForwardTests by ObservableToObservableForwardTestsImpl({ doOnBeforeComplete {} }) {
 
     private val upstream = TestObservable<Int>()
 
@@ -37,7 +38,7 @@ class DoOnBeforeCompleteTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_emitted_value() {
+    fun does_not_call_action_WHEN_upstream_emitted_value() {
         val isCalled = AtomicBoolean()
 
         upstream
@@ -52,7 +53,7 @@ class DoOnBeforeCompleteTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_produced_error() {
+    fun does_not_call_action_WHEN_upstream_produced_error() {
         val isCalled = AtomicBoolean()
 
         upstream
@@ -67,7 +68,7 @@ class DoOnBeforeCompleteTest
     }
 
     @Test
-    fun produces_error_WHEN_exception_in_lambda() {
+    fun produces_error_WHEN_upstream_completed_and_exception_in_lambda() {
         val error = Exception()
 
         val observer =

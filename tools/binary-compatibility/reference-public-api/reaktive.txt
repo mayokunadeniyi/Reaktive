@@ -96,9 +96,30 @@ public final class com/badoo/reaktive/completable/CompletableEmitterSerializeKt 
 public abstract interface class com/badoo/reaktive/completable/CompletableObserver : com/badoo/reaktive/base/Observer, com/badoo/reaktive/completable/CompletableCallbacks {
 }
 
+public class com/badoo/reaktive/completable/CompletableWrapper : com/badoo/reaktive/completable/Completable {
+	public fun <init> (Lcom/badoo/reaktive/completable/Completable;)V
+	public final fun subscribe ()Lcom/badoo/reaktive/disposable/Disposable;
+	public synthetic fun subscribe (Lcom/badoo/reaktive/base/Observer;)V
+	public fun subscribe (Lcom/badoo/reaktive/completable/CompletableObserver;)V
+	public final fun subscribe (ZLkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/completable/CompletableWrapper;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/completable/CompletableWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/completable/CompletableWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+}
+
+public final class com/badoo/reaktive/completable/CompletableWrapperKt {
+	public static final fun wrap (Lcom/badoo/reaktive/completable/Completable;)Lcom/badoo/reaktive/completable/CompletableWrapper;
+}
+
 public final class com/badoo/reaktive/completable/ConcatKt {
 	public static final fun concat (Ljava/lang/Iterable;)Lcom/badoo/reaktive/completable/Completable;
 	public static final fun concat ([Lcom/badoo/reaktive/completable/Completable;)Lcom/badoo/reaktive/completable/Completable;
+}
+
+public final class com/badoo/reaktive/completable/DeferKt {
+	public static final fun completableDefer (Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/completable/Completable;
 }
 
 public final class com/badoo/reaktive/completable/DelayKt {
@@ -108,6 +129,15 @@ public final class com/badoo/reaktive/completable/DelayKt {
 
 public final class com/badoo/reaktive/completable/DelaySubscriptionKt {
 	public static final fun delaySubscription (Lcom/badoo/reaktive/completable/Completable;JLcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/completable/Completable;
+}
+
+public final class com/badoo/reaktive/completable/DoOnAfterKt {
+	public static final fun doOnAfterComplete (Lcom/badoo/reaktive/completable/Completable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/completable/Completable;
+	public static final fun doOnAfterDispose (Lcom/badoo/reaktive/completable/Completable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/completable/Completable;
+	public static final fun doOnAfterError (Lcom/badoo/reaktive/completable/Completable;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/completable/Completable;
+	public static final fun doOnAfterFinally (Lcom/badoo/reaktive/completable/Completable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/completable/Completable;
+	public static final fun doOnAfterSubscribe (Lcom/badoo/reaktive/completable/Completable;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/completable/Completable;
+	public static final fun doOnAfterTerminate (Lcom/badoo/reaktive/completable/Completable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/completable/Completable;
 }
 
 public final class com/badoo/reaktive/completable/DoOnBeforeKt {
@@ -165,6 +195,11 @@ public final class com/badoo/reaktive/completable/ThreadLocalKt {
 	public static final fun threadLocal (Lcom/badoo/reaktive/completable/Completable;)Lcom/badoo/reaktive/completable/Completable;
 }
 
+public final class com/badoo/reaktive/completable/TimeoutKt {
+	public static final fun timeout (Lcom/badoo/reaktive/completable/Completable;JLcom/badoo/reaktive/scheduler/Scheduler;Lcom/badoo/reaktive/completable/Completable;)Lcom/badoo/reaktive/completable/Completable;
+	public static synthetic fun timeout$default (Lcom/badoo/reaktive/completable/Completable;JLcom/badoo/reaktive/scheduler/Scheduler;Lcom/badoo/reaktive/completable/Completable;ILjava/lang/Object;)Lcom/badoo/reaktive/completable/Completable;
+}
+
 public final class com/badoo/reaktive/completable/TimerKt {
 	public static final fun completableTimer (JLcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/completable/Completable;
 }
@@ -210,6 +245,7 @@ public class com/badoo/reaktive/disposable/DisposableWrapper : com/badoo/reaktiv
 	public fun <init> ()V
 	public fun dispose ()V
 	public fun isDisposed ()Z
+	public final fun replace (Lcom/badoo/reaktive/disposable/Disposable;)Lcom/badoo/reaktive/disposable/Disposable;
 	public final fun set (Lcom/badoo/reaktive/disposable/Disposable;)V
 }
 
@@ -271,6 +307,14 @@ public final class com/badoo/reaktive/maybe/ConcatKt {
 	public static final fun concat ([Lcom/badoo/reaktive/maybe/Maybe;)Lcom/badoo/reaktive/observable/Observable;
 }
 
+public final class com/badoo/reaktive/maybe/DefaultIfEmptyKt {
+	public static final fun defaultIfEmpty (Lcom/badoo/reaktive/maybe/Maybe;Ljava/lang/Object;)Lcom/badoo/reaktive/single/Single;
+}
+
+public final class com/badoo/reaktive/maybe/DeferKt {
+	public static final fun maybeDefer (Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/maybe/Maybe;
+}
+
 public final class com/badoo/reaktive/maybe/DelayKt {
 	public static final fun delay (Lcom/badoo/reaktive/maybe/Maybe;JLcom/badoo/reaktive/scheduler/Scheduler;Z)Lcom/badoo/reaktive/maybe/Maybe;
 	public static synthetic fun delay$default (Lcom/badoo/reaktive/maybe/Maybe;JLcom/badoo/reaktive/scheduler/Scheduler;ZILjava/lang/Object;)Lcom/badoo/reaktive/maybe/Maybe;
@@ -278,6 +322,16 @@ public final class com/badoo/reaktive/maybe/DelayKt {
 
 public final class com/badoo/reaktive/maybe/DelaySubscriptionKt {
 	public static final fun delaySubscription (Lcom/badoo/reaktive/maybe/Maybe;JLcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/maybe/Maybe;
+}
+
+public final class com/badoo/reaktive/maybe/DoOnAfterKt {
+	public static final fun doOnAfterComplete (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static final fun doOnAfterDispose (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static final fun doOnAfterError (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static final fun doOnAfterFinally (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static final fun doOnAfterSubscribe (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static final fun doOnAfterSuccess (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static final fun doOnAfterTerminate (Lcom/badoo/reaktive/maybe/Maybe;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/maybe/Maybe;
 }
 
 public final class com/badoo/reaktive/maybe/DoOnBeforeKt {
@@ -351,6 +405,25 @@ public abstract interface class com/badoo/reaktive/maybe/MaybeEmitter : com/bado
 public abstract interface class com/badoo/reaktive/maybe/MaybeObserver : com/badoo/reaktive/base/Observer, com/badoo/reaktive/maybe/MaybeCallbacks {
 }
 
+public class com/badoo/reaktive/maybe/MaybeWrapper : com/badoo/reaktive/maybe/Maybe {
+	public fun <init> (Lcom/badoo/reaktive/maybe/Maybe;)V
+	public final fun subscribe ()Lcom/badoo/reaktive/disposable/Disposable;
+	public synthetic fun subscribe (Lcom/badoo/reaktive/base/Observer;)V
+	public fun subscribe (Lcom/badoo/reaktive/maybe/MaybeObserver;)V
+	public final fun subscribe (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/maybe/MaybeWrapper;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/maybe/MaybeWrapper;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/maybe/MaybeWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/maybe/MaybeWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+}
+
+public final class com/badoo/reaktive/maybe/MaybeWrapperKt {
+	public static final fun wrap (Lcom/badoo/reaktive/maybe/Maybe;)Lcom/badoo/reaktive/maybe/MaybeWrapper;
+}
+
 public final class com/badoo/reaktive/maybe/MergeKt {
 	public static final fun merge (Ljava/lang/Iterable;)Lcom/badoo/reaktive/observable/Observable;
 	public static final fun merge ([Lcom/badoo/reaktive/maybe/Maybe;)Lcom/badoo/reaktive/observable/Observable;
@@ -362,6 +435,10 @@ public final class com/badoo/reaktive/maybe/NotNullKt {
 
 public final class com/badoo/reaktive/maybe/ObserveOnKt {
 	public static final fun observeOn (Lcom/badoo/reaktive/maybe/Maybe;Lcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/maybe/Maybe;
+}
+
+public final class com/badoo/reaktive/maybe/OnErrorCompleteKt {
+	public static final fun onErrorComplete (Lcom/badoo/reaktive/maybe/Maybe;)Lcom/badoo/reaktive/maybe/Maybe;
 }
 
 public final class com/badoo/reaktive/maybe/OnErrorResumeNextKt {
@@ -407,6 +484,11 @@ public final class com/badoo/reaktive/maybe/ThreadLocalKt {
 	public static final fun threadLocal (Lcom/badoo/reaktive/maybe/Maybe;)Lcom/badoo/reaktive/maybe/Maybe;
 }
 
+public final class com/badoo/reaktive/maybe/TimeoutKt {
+	public static final fun timeout (Lcom/badoo/reaktive/maybe/Maybe;JLcom/badoo/reaktive/scheduler/Scheduler;Lcom/badoo/reaktive/maybe/Maybe;)Lcom/badoo/reaktive/maybe/Maybe;
+	public static synthetic fun timeout$default (Lcom/badoo/reaktive/maybe/Maybe;JLcom/badoo/reaktive/scheduler/Scheduler;Lcom/badoo/reaktive/maybe/Maybe;ILjava/lang/Object;)Lcom/badoo/reaktive/maybe/Maybe;
+}
+
 public final class com/badoo/reaktive/maybe/TimerKt {
 	public static final fun maybeTimer (JLcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/maybe/Maybe;
 }
@@ -449,6 +531,11 @@ public final class com/badoo/reaktive/observable/AsCompletableKt {
 public final class com/badoo/reaktive/observable/AutoConnectKt {
 	public static final fun autoConnect (Lcom/badoo/reaktive/observable/ConnectableObservable;I)Lcom/badoo/reaktive/observable/Observable;
 	public static synthetic fun autoConnect$default (Lcom/badoo/reaktive/observable/ConnectableObservable;IILjava/lang/Object;)Lcom/badoo/reaktive/observable/Observable;
+}
+
+public final class com/badoo/reaktive/observable/BufferCountSkipKt {
+	public static final fun buffer (Lcom/badoo/reaktive/observable/Observable;II)Lcom/badoo/reaktive/observable/Observable;
+	public static synthetic fun buffer$default (Lcom/badoo/reaktive/observable/Observable;IIILjava/lang/Object;)Lcom/badoo/reaktive/observable/Observable;
 }
 
 public final class com/badoo/reaktive/observable/CollectKt {
@@ -506,6 +593,10 @@ public final class com/badoo/reaktive/observable/DefaultIfEmptyKt {
 	public static final fun defaultIfEmpty (Lcom/badoo/reaktive/observable/Observable;Ljava/lang/Object;)Lcom/badoo/reaktive/observable/Observable;
 }
 
+public final class com/badoo/reaktive/observable/DeferKt {
+	public static final fun observableDefer (Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/observable/Observable;
+}
+
 public final class com/badoo/reaktive/observable/DelayKt {
 	public static final fun delay (Lcom/badoo/reaktive/observable/Observable;JLcom/badoo/reaktive/scheduler/Scheduler;Z)Lcom/badoo/reaktive/observable/Observable;
 	public static synthetic fun delay$default (Lcom/badoo/reaktive/observable/Observable;JLcom/badoo/reaktive/scheduler/Scheduler;ZILjava/lang/Object;)Lcom/badoo/reaktive/observable/Observable;
@@ -520,6 +611,16 @@ public final class com/badoo/reaktive/observable/DistinctUntilChangedKt {
 	public static final fun distinctUntilChanged (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function2;)Lcom/badoo/reaktive/observable/Observable;
 	public static synthetic fun distinctUntilChanged$default (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/badoo/reaktive/observable/Observable;
 	public static synthetic fun distinctUntilChanged$default (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/badoo/reaktive/observable/Observable;
+}
+
+public final class com/badoo/reaktive/observable/DoOnAfterKt {
+	public static final fun doOnAfterComplete (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/observable/Observable;
+	public static final fun doOnAfterDispose (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/observable/Observable;
+	public static final fun doOnAfterError (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/observable/Observable;
+	public static final fun doOnAfterFinally (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/observable/Observable;
+	public static final fun doOnAfterNext (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/observable/Observable;
+	public static final fun doOnAfterSubscribe (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/observable/Observable;
+	public static final fun doOnAfterTerminate (Lcom/badoo/reaktive/observable/Observable;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/observable/Observable;
 }
 
 public final class com/badoo/reaktive/observable/DoOnBeforeKt {
@@ -628,8 +729,31 @@ public final class com/badoo/reaktive/observable/ObservableEmitterSerializeKt {
 public abstract interface class com/badoo/reaktive/observable/ObservableObserver : com/badoo/reaktive/base/Observer, com/badoo/reaktive/observable/ObservableCallbacks {
 }
 
+public class com/badoo/reaktive/observable/ObservableWrapper : com/badoo/reaktive/observable/Observable {
+	public fun <init> (Lcom/badoo/reaktive/observable/Observable;)V
+	public final fun subscribe ()Lcom/badoo/reaktive/disposable/Disposable;
+	public synthetic fun subscribe (Lcom/badoo/reaktive/base/Observer;)V
+	public fun subscribe (Lcom/badoo/reaktive/observable/ObservableObserver;)V
+	public final fun subscribe (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/observable/ObservableWrapper;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/observable/ObservableWrapper;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/observable/ObservableWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/observable/ObservableWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+}
+
+public final class com/badoo/reaktive/observable/ObservableWrapperKt {
+	public static final fun wrap (Lcom/badoo/reaktive/observable/Observable;)Lcom/badoo/reaktive/observable/ObservableWrapper;
+}
+
 public final class com/badoo/reaktive/observable/ObserveOnKt {
 	public static final fun observeOn (Lcom/badoo/reaktive/observable/Observable;Lcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/observable/Observable;
+}
+
+public final class com/badoo/reaktive/observable/OnErrorCompleteKt {
+	public static final fun onErrorComplete (Lcom/badoo/reaktive/observable/Observable;)Lcom/badoo/reaktive/observable/Observable;
 }
 
 public final class com/badoo/reaktive/observable/OnErrorResumeNextKt {
@@ -852,6 +976,13 @@ public final class com/badoo/reaktive/scheduler/Scheduler$Executor$DefaultImpls 
 	public static synthetic fun submitRepeating$default (Lcom/badoo/reaktive/scheduler/Scheduler$Executor;JJLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
+public final class com/badoo/reaktive/scheduler/SchedulerExtKt {
+	public static final fun submit (Lcom/badoo/reaktive/scheduler/Scheduler;JLkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun submit$default (Lcom/badoo/reaktive/scheduler/Scheduler;JLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static final fun submitRepeating (Lcom/badoo/reaktive/scheduler/Scheduler;JJLkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun submitRepeating$default (Lcom/badoo/reaktive/scheduler/Scheduler;JJLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+}
+
 public final class com/badoo/reaktive/scheduler/SchedulersKt {
 	public static final fun getComputationScheduler ()Lcom/badoo/reaktive/scheduler/Scheduler;
 	public static final fun getIoScheduler ()Lcom/badoo/reaktive/scheduler/Scheduler;
@@ -884,6 +1015,10 @@ public final class com/badoo/reaktive/single/ConcatKt {
 	public static final fun concat ([Lcom/badoo/reaktive/single/Single;)Lcom/badoo/reaktive/observable/Observable;
 }
 
+public final class com/badoo/reaktive/single/DeferKt {
+	public static final fun singleDefer (Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/single/Single;
+}
+
 public final class com/badoo/reaktive/single/DelayKt {
 	public static final fun delay (Lcom/badoo/reaktive/single/Single;JLcom/badoo/reaktive/scheduler/Scheduler;Z)Lcom/badoo/reaktive/single/Single;
 	public static synthetic fun delay$default (Lcom/badoo/reaktive/single/Single;JLcom/badoo/reaktive/scheduler/Scheduler;ZILjava/lang/Object;)Lcom/badoo/reaktive/single/Single;
@@ -891,6 +1026,15 @@ public final class com/badoo/reaktive/single/DelayKt {
 
 public final class com/badoo/reaktive/single/DelaySubscriptionKt {
 	public static final fun delaySubscription (Lcom/badoo/reaktive/single/Single;JLcom/badoo/reaktive/scheduler/Scheduler;)Lcom/badoo/reaktive/single/Single;
+}
+
+public final class com/badoo/reaktive/single/DoOnAfterKt {
+	public static final fun doOnAfterDispose (Lcom/badoo/reaktive/single/Single;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/single/Single;
+	public static final fun doOnAfterError (Lcom/badoo/reaktive/single/Single;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/single/Single;
+	public static final fun doOnAfterFinally (Lcom/badoo/reaktive/single/Single;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/single/Single;
+	public static final fun doOnAfterSubscribe (Lcom/badoo/reaktive/single/Single;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/single/Single;
+	public static final fun doOnAfterSuccess (Lcom/badoo/reaktive/single/Single;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/single/Single;
+	public static final fun doOnAfterTerminate (Lcom/badoo/reaktive/single/Single;Lkotlin/jvm/functions/Function0;)Lcom/badoo/reaktive/single/Single;
 }
 
 public final class com/badoo/reaktive/single/DoOnBeforeKt {
@@ -1001,6 +1145,23 @@ public abstract interface class com/badoo/reaktive/single/SingleEmitter : com/ba
 public abstract interface class com/badoo/reaktive/single/SingleObserver : com/badoo/reaktive/base/Observer, com/badoo/reaktive/single/SingleCallbacks {
 }
 
+public class com/badoo/reaktive/single/SingleWrapper : com/badoo/reaktive/single/Single {
+	public fun <init> (Lcom/badoo/reaktive/single/Single;)V
+	public final fun subscribe ()Lcom/badoo/reaktive/disposable/Disposable;
+	public synthetic fun subscribe (Lcom/badoo/reaktive/base/Observer;)V
+	public fun subscribe (Lcom/badoo/reaktive/single/SingleObserver;)V
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public final fun subscribe (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/single/SingleWrapper;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/single/SingleWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/single/SingleWrapper;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
+}
+
+public final class com/badoo/reaktive/single/SingleWrapperKt {
+	public static final fun wrap (Lcom/badoo/reaktive/single/Single;)Lcom/badoo/reaktive/single/SingleWrapper;
+}
+
 public final class com/badoo/reaktive/single/SubscribeKt {
 	public static final fun subscribe (Lcom/badoo/reaktive/single/Single;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lcom/badoo/reaktive/disposable/Disposable;
 	public static synthetic fun subscribe$default (Lcom/badoo/reaktive/single/Single;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/badoo/reaktive/disposable/Disposable;
@@ -1012,6 +1173,11 @@ public final class com/badoo/reaktive/single/SubscribeOnKt {
 
 public final class com/badoo/reaktive/single/ThreadLocalKt {
 	public static final fun threadLocal (Lcom/badoo/reaktive/single/Single;)Lcom/badoo/reaktive/single/Single;
+}
+
+public final class com/badoo/reaktive/single/TimeoutKt {
+	public static final fun timeout (Lcom/badoo/reaktive/single/Single;JLcom/badoo/reaktive/scheduler/Scheduler;Lcom/badoo/reaktive/single/Single;)Lcom/badoo/reaktive/single/Single;
+	public static synthetic fun timeout$default (Lcom/badoo/reaktive/single/Single;JLcom/badoo/reaktive/scheduler/Scheduler;Lcom/badoo/reaktive/single/Single;ILjava/lang/Object;)Lcom/badoo/reaktive/single/Single;
 }
 
 public final class com/badoo/reaktive/single/TimerKt {

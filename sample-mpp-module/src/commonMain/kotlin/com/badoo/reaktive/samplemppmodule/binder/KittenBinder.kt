@@ -1,6 +1,5 @@
 package com.badoo.reaktive.samplemppmodule.binder
 
-
 import com.badoo.reaktive.annotations.ExperimentalReaktiveApi
 import com.badoo.reaktive.disposable.scope.DisposableScope
 import com.badoo.reaktive.disposable.scope.disposableScope
@@ -8,7 +7,7 @@ import com.badoo.reaktive.observable.map
 import com.badoo.reaktive.samplemppmodule.store.KittenStoreBuilder
 import com.badoo.reaktive.samplemppmodule.view.KittenView
 
-@UseExperimental(ExperimentalReaktiveApi::class)
+@OptIn(ExperimentalReaktiveApi::class)
 class KittenBinder(
     storeBuilder: KittenStoreBuilder
 ) {

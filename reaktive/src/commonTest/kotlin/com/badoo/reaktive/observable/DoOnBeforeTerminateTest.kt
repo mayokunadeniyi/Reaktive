@@ -13,8 +13,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-class DoOnBeforeTerminateTest
-    : ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeTerminate {} }) {
+class DoOnBeforeTerminateTest :
+    ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeTerminate {} }),
+    ObservableToObservableForwardTests by ObservableToObservableForwardTestsImpl({ doOnBeforeTerminate {} }) {
 
     private val upstream = TestObservable<Int>()
     private val callOrder = SharedList<String>()
@@ -61,7 +62,7 @@ class DoOnBeforeTerminateTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_emitted_value() {
+    fun does_not_call_action_WHEN_upstream_emitted_value() {
         val isCalled = AtomicBoolean()
 
         upstream

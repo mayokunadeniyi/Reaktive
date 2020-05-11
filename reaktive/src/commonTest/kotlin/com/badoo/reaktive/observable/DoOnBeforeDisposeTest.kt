@@ -15,8 +15,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-class DoOnBeforeDisposeTest
-    : ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeDispose {} }) {
+class DoOnBeforeDisposeTest :
+    ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeDispose {} }),
+    ObservableToObservableForwardTests by ObservableToObservableForwardTestsImpl({ doOnBeforeDispose {} }) {
 
     private val upstream = TestObservable<Int>()
 
@@ -58,7 +59,7 @@ class DoOnBeforeDisposeTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_emitted_value() {
+    fun does_not_call_action_WHEN_upstream_emitted_value() {
         val isCalled = AtomicBoolean()
 
         upstream
@@ -73,7 +74,7 @@ class DoOnBeforeDisposeTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_completed() {
+    fun does_not_call_action_WHEN_upstream_completed() {
         val isCalled = AtomicBoolean()
 
         upstream
@@ -88,7 +89,7 @@ class DoOnBeforeDisposeTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_produced_error() {
+    fun does_not_call_action_WHEN_upstream_produced_error() {
         val isCalled = AtomicBoolean()
 
         upstream
@@ -103,7 +104,7 @@ class DoOnBeforeDisposeTest
     }
 
     @Test
-    fun calls_uncaught_exception_handler_WHEN_exception_in_lambda() {
+    fun calls_uncaught_exception_handler_WHEN_downstream_disposed_and_exception_in_lambda() {
         val caughtException = mockUncaughtExceptionHandler()
         val error = Exception()
 

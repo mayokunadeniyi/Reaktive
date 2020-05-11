@@ -6,6 +6,9 @@
 
 Kotlin multiplatform implementation of Reactive Extensions.
 
+Should you have any questions or feedback welcome to the **Kotlin Slack channel**: 
+[#reaktive](https://kotlinlang.slack.com/archives/CU05HB31A)
+
 ### Setup
 Recommended minimum Gradle version is 5.3. Please read first the documentation about
 [metadata publishing mode](https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html#experimental-metadata-publishing-mode).
@@ -119,11 +122,17 @@ kotlin {
 
 ### Features:
 * Multiplatform: JVM, Android, iOS, macOS, watchOS, tvOS, JavaScript, Linux X64, Linux ARM 32 hfp
-* Schedulers support: computation, IO, trampoline, main
+* Schedulers support: 
+  * `computationScheduler` - fixed thread pool equal to a number of cores
+  * `ioScheduler` - unbound thread pool with caching policy
+  * `newThreadScheduler` - creates a new thread for each unit of work
+  * `singleScheduler` - executes tasks on a single shared background thread
+  * `trampolineScheduler` - queues tasks and executes them on one of the participating threads
+  * `mainScheduler` - executes tasks on main thread
 * True multithreading for Kotlin/Native (there are some [limitations](https://kotlinlang.org/docs/reference/native/concurrency.html#object-transfer-and-freezing))
 * Thread local subscriptions without freezing for Kotlin/Native
-* Supported sources: Observable, Maybe, Single, Completable
-* Subjects: PublishSubject, BehaviorSubject, ReplaySubject, UnicastSubject
+* Supported sources: `Observable`, `Maybe`, `Single`, `Completable`
+* Subjects: `PublishSubject`, `BehaviorSubject`, `ReplaySubject`, `UnicastSubject`
 * Interoperability with Kotlin Coroutines: conversions between coroutines (including Flow) and Reaktive
 * Interoperability with RxJava2 and RxJava3: conversion of sources between Reaktive and RxJava, ability to reuse RxJava's schedulers
 
@@ -182,6 +191,46 @@ observable<Any> { emitter ->
 
 In both cases subscription (`subscribe` call) **must** be performed on the Main thread.
 
+#### Coroutines interop
+Another important thing to keep in mind is the interop with coroutines provided by the `coroutines-interop` module.
+This also has a few important limitations:
+- Neither `Job` nor `CoroutineContext` can be frozen (until release of the [multithreaded coroutines](https://github.com/Kotlin/kotlinx.coroutines/pull/1648))
+- Because of the first limitation all `xxxFromCoroutine {}` builders in Kotlin/Native are executed inside a `runBlocking` block and should be subscribed on a background `Scheduler`
+- Ktor does not work well in multithreaded environment in Kotlin/Native (it may crash), so please don't mix Ktor and `coroutines-interop`
+- Converters `Scheduler.asCoroutineDispatcher()` and `CoroutineContext.asScheduler()` are available only in JVM and JS
+
+Consider the following example for `corutines-interop`:
+```kotlin
+singleFromCoroutine {
+    /*
+     * This block will be executed inside `runBlocking` in Kotlin/Native.
+     * Please avoid using Ktor here, it may crash.
+     */
+}
+    .subscribeOn(ioScheduler)
+    .observeOn(mainScheduler)
+    .subscribe { /* Get the result here */ }
+```
+
+We recommend to avoid using Ktor in Kotlin/Native multithreaded environment until multithreaded coroutines, but if you really need consider the following function:
+```kotlin
+fun <T> singleFromCoroutineUnsafe(mainContext: CoroutineContext, block: suspend CoroutineScope.() -> T): Single<T> =
+    single { emitter ->
+        GlobalScope
+            .launch(mainContext) {
+                try {
+                    emitter.onSuccess(block())
+                } catch (e: Throwable) {
+                    emitter.onError(e)
+                }
+            }
+            .asDisposable()
+            .also(emitter::setDisposable)
+    }
+```
+
+Now you can use this function together with Ktor but make sure you are doing this always on Main thread, neither `subscribeOn` nor `observeOn` nor any other thread switch are allowed.
+
 ### Subscription management with DisposableScope
 
 Reaktive provides an easy way to manage subscriptions: [DisposableScope](https://github.com/badoo/Reaktive/blob/master/reaktive/src/commonMain/kotlin/com/badoo/reaktive/disposable/scope/DisposableScope.kt).
@@ -238,6 +287,40 @@ class MyActivity : AppCompatActivity(), DisposableScope by DisposableScope() {
     }
 }
 ```
+
+### Sharing Reaktive streams with iOS Swift
+Unlike coroutines Reaktive streams can be directly used from Swift. But since generics for interfaces 
+are [not exported to Swift](https://kotlinlang.org/docs/reference/native/objc_interop.html#generics), 
+Reaktive provides a workaround.
+
+You can wrap any Reaktive stream into a `Wrapper` class:
+```kotlin
+class SharedDataSource {
+    fun load(): SingleWrapper<String> =
+        singleFromFunction { 
+            // A long running operation
+            "A result"
+        }
+            .subscribeOn(ioScheduler)
+            .observeOn(mainScheduler)
+            .wrap()
+}
+```
+
+Now if you [enable Objective-C generics](https://kotlinlang.org/docs/reference/native/objc_interop.html#to-use) 
+you will be able to use it from Swift:
+```swift
+let dataSource = SharedDataSource()
+
+let disposable = dataSource
+    .load()
+    .subscribe(isThreadLocal: false, onSubscribe: nil, onError: nil) { (value: NSString) in print(value) }
+       
+    // At some point later
+    disposable.dispose()
+```
+
+`Wrappers` are available for `Observable`, `Single`, `Maybe` and `Completable`.  
 
 ### Samples:
 * [MPP module](https://github.com/badoo/Reaktive/tree/master/sample-mpp-module)

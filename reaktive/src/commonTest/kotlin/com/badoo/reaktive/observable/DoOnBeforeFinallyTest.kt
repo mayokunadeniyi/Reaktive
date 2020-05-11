@@ -19,8 +19,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-class DoOnBeforeFinallyTest
-    : ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeFinally {} }) {
+class DoOnBeforeFinallyTest :
+    ObservableToObservableTests by ObservableToObservableTestsImpl({ doOnBeforeFinally {} }),
+    ObservableToObservableForwardTests by ObservableToObservableForwardTestsImpl({ doOnBeforeFinally {} }) {
 
     private val upstream = TestObservable<Int>()
 
@@ -171,7 +172,7 @@ class DoOnBeforeFinallyTest
     }
 
     @Test
-    fun does_not_call_action_WHEN_emitted_value() {
+    fun does_not_call_action_WHEN_upstream_emitted_value() {
         val isCalled = AtomicBoolean()
 
         upstream
@@ -200,7 +201,7 @@ class DoOnBeforeFinallyTest
     }
 
     @Test
-    fun calls_uncaught_exception_handler_WHEN_exception_in_lambda() {
+    fun calls_uncaught_exception_handler_WHEN_downstream_disposed_and_exception_in_lambda() {
         val caughtException = mockUncaughtExceptionHandler()
         val error = Exception()
 
