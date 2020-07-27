@@ -1,15 +1,15 @@
-import org.gradle.api.internal.AbstractTask
+import com.badoo.reaktive.configuration.Target
 
-open class BuildMacosSampleTask : AbstractTask() {
+open class BuildMacosSampleTask : DefaultTask() {
 
     @InputDirectory
     val sources: File = project.file("sample-macos-app")
 
     @InputDirectory
-    lateinit var releaseFramework: Provider<File>
+    val releaseFramework: Property<File> = project.objects.property()
 
     @InputDirectory
-    lateinit var debugFramework: Provider<File>
+    val debugFramework: Property<File> = project.objects.property()
 
     init {
         group = LifecycleBasePlugin.BUILD_GROUP
@@ -29,9 +29,11 @@ open class BuildMacosSampleTask : AbstractTask() {
     }
 }
 
-tasks.register<BuildMacosSampleTask>("build") {
-    val binariesTasks = project(":sample-mpp-module").tasks.named("macosX64MainBinaries")
-    // macosX64MainBinaries does not define any outputs, hardcode them
-    releaseFramework = binariesTasks.map { it.project.file("build/bin/macosX64/releaseFramework") }
-    debugFramework = binariesTasks.map { it.project.file("build/bin/macosX64/debugFramework") }
+if (Target.shouldDefineTarget(project, Target.MACOS)) {
+    tasks.register<BuildMacosSampleTask>("build") {
+        val binariesTasks = project(":sample-mpp-module").tasks.named("macosX64MainBinaries")
+        // macosX64MainBinaries does not define any outputs, hardcode them
+        releaseFramework.set(binariesTasks.map { it.project.file("build/bin/macosX64/releaseFramework") })
+        debugFramework.set(binariesTasks.map { it.project.file("build/bin/macosX64/debugFramework") })
+    }
 }

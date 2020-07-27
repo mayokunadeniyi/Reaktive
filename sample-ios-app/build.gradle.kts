@@ -1,16 +1,16 @@
-import org.gradle.api.internal.AbstractTask
+import com.badoo.reaktive.configuration.Target
 import org.jetbrains.kotlin.gradle.tasks.FatFrameworkTask
 
-open class BuildIosSampleTask : AbstractTask() {
+open class BuildIosSampleTask : DefaultTask() {
 
     @InputDirectory
     val sources: File = project.file("sample-ios-app")
 
     @InputDirectory
-    lateinit var fatDebug: Provider<File>
+    val releaseFramework: Property<File> = project.objects.property()
 
     @InputDirectory
-    lateinit var fatRelease: Provider<File>
+    val debugFramework: Property<File> = project.objects.property()
 
     init {
         group = LifecycleBasePlugin.BUILD_GROUP
@@ -45,14 +45,18 @@ open class BuildIosSampleTask : AbstractTask() {
     }
 }
 
-tasks.register<BuildIosSampleTask>("build") {
-    val sampleMppModuleTasks = project(":sample-mpp-module").tasks
-    fatDebug =
-        sampleMppModuleTasks
-            .named<FatFrameworkTask>("fatIosDebug")
-            .map { it.fatFrameworkDir }
-    fatRelease =
-        sampleMppModuleTasks
-            .named<FatFrameworkTask>("fatIosRelease")
-            .map { it.fatFrameworkDir }
+if (Target.shouldDefineTarget(project, Target.IOS)) {
+    tasks.register<BuildIosSampleTask>("build") {
+        val sampleMppModuleTasks = project(":sample-mpp-module").tasks
+        releaseFramework.set(
+            sampleMppModuleTasks
+                .named<FatFrameworkTask>("fatIosRelease")
+                .map { it.fatFrameworkDir }
+        )
+        debugFramework.set(
+            sampleMppModuleTasks
+                .named<FatFrameworkTask>("fatIosDebug")
+                .map { it.fatFrameworkDir }
+        )
+    }
 }

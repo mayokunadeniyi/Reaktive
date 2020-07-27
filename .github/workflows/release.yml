@@ -10,11 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Install Java
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
       - name: Release JVM, Android, JS, Linux
         run: ./gradlew bintrayUpload -Ptarget=all_linux_hosted -Pbintray_user=${{ secrets.BINTRAY_USER }} -Pbintray_key=${{ secrets.BINTRAY_KEY }}
       - name: Release Metadata
@@ -24,7 +26,7 @@ jobs:
     runs-on: macOS-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Install Java
         uses: actions/setup-java@v1
         with:

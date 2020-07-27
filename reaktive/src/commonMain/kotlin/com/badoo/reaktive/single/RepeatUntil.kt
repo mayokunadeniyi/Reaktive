@@ -5,18 +5,13 @@ import com.badoo.reaktive.base.tryCatch
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.observable.Observable
 import com.badoo.reaktive.observable.observable
-import com.badoo.reaktive.utils.serializer.serializer
+import com.badoo.reaktive.utils.atomic.AtomicInt
 
 fun <T> Single<T>.repeatUntil(predicate: (T) -> Boolean): Observable<T> =
     observable { emitter ->
         val observer =
             object : SingleObserver<T>, ErrorCallback by emitter {
-                // Prevents recursive subscriptions
-                private val serializer =
-                    serializer<Unit> {
-                        subscribe(this)
-                        true
-                    }
+                private val recursiveGuard = AtomicInt()
 
                 override fun onSubscribe(disposable: Disposable) {
                     emitter.setDisposable(disposable)
@@ -33,11 +28,17 @@ fun <T> Single<T>.repeatUntil(predicate: (T) -> Boolean): Observable<T> =
                             } else if (!emitter.isDisposed) {
                                 subscribeToUpstream()
                             }
-                        })
+                        }
+                    )
                 }
 
                 fun subscribeToUpstream() {
-                    serializer.accept(Unit)
+                    // Prevents recursive subscriptions
+                    if (recursiveGuard.addAndGet(1) == 1) {
+                        do {
+                            subscribe(this)
+                        } while (recursiveGuard.addAndGet(-1) > 0)
+                    }
                 }
             }
         observer.subscribeToUpstream()
