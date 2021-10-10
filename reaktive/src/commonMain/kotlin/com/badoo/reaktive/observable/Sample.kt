@@ -6,6 +6,12 @@ import com.badoo.reaktive.disposable.plusAssign
 import com.badoo.reaktive.scheduler.Scheduler
 import com.badoo.reaktive.utils.atomic.AtomicReference
 
+/**
+ * Returns an [Observable] that emits the most recently emitted element (if any)
+ * emitted by the source [Observable] within periodic time intervals.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#sample-long-java.util.concurrent.TimeUnit-io.reactivex.Scheduler-).
+ */
 fun <T> Observable<T>.sample(windowMillis: Long, scheduler: Scheduler): Observable<T> =
     observable { emitter ->
         val disposables = CompositeDisposable()
@@ -20,7 +26,7 @@ fun <T> Observable<T>.sample(windowMillis: Long, scheduler: Scheduler): Observab
                 override fun onSubscribe(disposable: Disposable) {
                     disposables += disposable
 
-                    executor.submitRepeating(periodMillis = windowMillis) {
+                    executor.submitRepeating(startDelayMillis = windowMillis, periodMillis = windowMillis) {
                         lastValue
                             .value
                             ?.value

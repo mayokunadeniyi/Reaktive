@@ -9,45 +9,51 @@ import com.badoo.reaktive.base.tryCatch
 import com.badoo.reaktive.completable.CompletableCallbacks
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
-import com.badoo.reaktive.disposable.DisposableWrapper
+import com.badoo.reaktive.disposable.SerialDisposable
 import com.badoo.reaktive.disposable.doIfNotDisposed
 import com.badoo.reaktive.disposable.plusAssign
 import com.badoo.reaktive.utils.handleReaktiveError
 
+/**
+ * Calls the shared [action] for each new observer with the [Disposable] sent to the downstream.
+ * The [action] is called for each new observer **before** its `onSubscribe` callback is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doOnSubscribe-io.reactivex.functions.Consumer-).
+ */
 fun <T> Maybe<T>.doOnBeforeSubscribe(action: (Disposable) -> Unit): Maybe<T> =
     maybeUnsafe { observer ->
-        val disposableWrapper = DisposableWrapper()
+        val serialDisposable = SerialDisposable()
 
         try {
-            action(disposableWrapper)
+            action(serialDisposable)
         } catch (e: Throwable) {
-            observer.onSubscribe(disposableWrapper)
+            observer.onSubscribe(serialDisposable)
             observer.onError(e)
-            disposableWrapper.dispose()
+            serialDisposable.dispose()
 
             return@maybeUnsafe
         }
 
-        observer.onSubscribe(disposableWrapper)
+        observer.onSubscribe(serialDisposable)
 
         subscribeSafe(
             object : MaybeObserver<T> {
                 override fun onSubscribe(disposable: Disposable) {
-                    disposableWrapper.set(disposable)
+                    serialDisposable.set(disposable)
                 }
 
                 override fun onComplete() {
-                    disposableWrapper.doIfNotDisposed(dispose = true, block = observer::onComplete)
+                    serialDisposable.doIfNotDisposed(dispose = true, block = observer::onComplete)
                 }
 
                 override fun onSuccess(value: T) {
-                    disposableWrapper.doIfNotDisposed(dispose = true) {
+                    serialDisposable.doIfNotDisposed(dispose = true) {
                         observer.onSuccess(value)
                     }
                 }
 
                 override fun onError(error: Throwable) {
-                    disposableWrapper.doIfNotDisposed(dispose = true) {
+                    serialDisposable.doIfNotDisposed(dispose = true) {
                         observer.onError(error)
                     }
                 }
@@ -55,6 +61,12 @@ fun <T> Maybe<T>.doOnBeforeSubscribe(action: (Disposable) -> Unit): Maybe<T> =
         )
     }
 
+/**
+ * Calls the [consumer] with the emitted value when the [Maybe] signals `onSuccess`.
+ * The [consumer] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doOnSuccess-io.reactivex.functions.Consumer-).
+ */
 fun <T> Maybe<T>.doOnBeforeSuccess(consumer: (T) -> Unit): Maybe<T> =
     maybe { emitter ->
         subscribe(
@@ -74,6 +86,12 @@ fun <T> Maybe<T>.doOnBeforeSuccess(consumer: (T) -> Unit): Maybe<T> =
         )
     }
 
+/**
+ * Calls the [action] with the emitted value when the [Maybe] signals `onComplete`.
+ * The [action] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doOnComplete-io.reactivex.functions.Action-).
+ */
 fun <T> Maybe<T>.doOnBeforeComplete(action: () -> Unit): Maybe<T> =
     maybe { emitter ->
         subscribe(
@@ -91,6 +109,12 @@ fun <T> Maybe<T>.doOnBeforeComplete(action: () -> Unit): Maybe<T> =
         )
     }
 
+/**
+ * Calls the [consumer] with the emitted [Throwable] when the [Maybe] signals `onError`.
+ * The [consumer] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doOnError-io.reactivex.functions.Consumer-).
+ */
 fun <T> Maybe<T>.doOnBeforeError(consumer: (Throwable) -> Unit): Maybe<T> =
     maybe { emitter ->
         subscribe(
@@ -108,6 +132,12 @@ fun <T> Maybe<T>.doOnBeforeError(consumer: (Throwable) -> Unit): Maybe<T> =
         )
     }
 
+/**
+ * Calls the [action] when the [Maybe] signals a terminal event: `onSuccess`, `onComplete` or `onError`.
+ * The [action] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doOnTerminate-io.reactivex.functions.Action-).
+ */
 fun <T> Maybe<T>.doOnBeforeTerminate(action: () -> Unit): Maybe<T> =
     maybe { emitter ->
         subscribe(
@@ -137,6 +167,12 @@ fun <T> Maybe<T>.doOnBeforeTerminate(action: () -> Unit): Maybe<T> =
         )
     }
 
+/**
+ * Calls the shared [action] when the [Disposable] sent to the observer via `onSubscribe` is disposed.
+ * The [action] is called **before** the upstream is disposed.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doOnDispose-io.reactivex.functions.Action-).
+ */
 fun <T> Maybe<T>.doOnBeforeDispose(action: () -> Unit): Maybe<T> =
     maybeUnsafe { observer ->
         val disposables = CompositeDisposable()
@@ -181,6 +217,13 @@ fun <T> Maybe<T>.doOnBeforeDispose(action: () -> Unit): Maybe<T> =
         )
     }
 
+/**
+ * Calls the [action] when one of the following events occur:
+ * - The [Maybe] signals a terminal event: `onSuccess`, `onComplete` or `onError` (the [action] is called **before** the observer is called).
+ * - The [Disposable] sent to the observer via `onSubscribe` is disposed (the [action] is called **before** the upstream is disposed).
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#doFinally-io.reactivex.functions.Action-).
+ */
 fun <T> Maybe<T>.doOnBeforeFinally(action: () -> Unit): Maybe<T> =
     maybeUnsafe { observer ->
         val disposables = CompositeDisposable()

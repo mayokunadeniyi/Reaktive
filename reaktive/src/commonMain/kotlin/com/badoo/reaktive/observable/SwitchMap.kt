@@ -6,19 +6,25 @@ import com.badoo.reaktive.base.subscribeSafe
 import com.badoo.reaktive.base.tryCatch
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
-import com.badoo.reaktive.disposable.DisposableWrapper
+import com.badoo.reaktive.disposable.SerialDisposable
 import com.badoo.reaktive.disposable.plusAssign
 import com.badoo.reaktive.utils.atomic.AtomicReference
 import com.badoo.reaktive.utils.atomic.update
 import com.badoo.reaktive.utils.atomic.updateAndGet
 
+/**
+ * Calls the [mapper] for each element emitted by the [Observable] and subscribes to the returned inner [Observable],
+ * disposing any previously subscribed inner [Observable]. Emits elements of a most recent inner [Observable].
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#switchMap-io.reactivex.functions.Function-).
+ */
 fun <T, R> Observable<T>.switchMap(mapper: (T) -> Observable<R>): Observable<R> =
     observable { emitter ->
         val disposables = CompositeDisposable()
         emitter.setDisposable(disposables)
 
-        val innerDisposableWrapper = DisposableWrapper()
-        disposables += innerDisposableWrapper
+        val innerSerialDisposable = SerialDisposable()
+        disposables += innerSerialDisposable
 
         val state = AtomicReference(SwitchMapState())
         val serializedEmitter = emitter.serialize()
@@ -37,21 +43,21 @@ fun <T, R> Observable<T>.switchMap(mapper: (T) -> Observable<R>): Observable<R> 
                 }
 
                 private fun onInnerObservable(observable: Observable<R>) {
-                    val localDisposableWrapper = DisposableWrapper()
+                    val localSerialDisposable = SerialDisposable()
 
                     /*
                      * Dispose any existing inner Observable.
                      * If a previous Observable did not provide its disposable yet
                      * it will be disposed automatically later since
-                     * its localDisposableWrapper is disposed.
+                     * its localSerialDisposable is disposed.
                      */
-                    innerDisposableWrapper.set(localDisposableWrapper)
+                    innerSerialDisposable.set(localSerialDisposable)
 
                     val innerObserver =
                         object : ObservableObserver<R>, ValueCallback<R> by serializedEmitter,
                             ErrorCallback by serializedEmitter {
                             override fun onSubscribe(disposable: Disposable) {
-                                localDisposableWrapper.set(disposable)
+                                localSerialDisposable.set(disposable)
                             }
 
                             override fun onComplete() {
@@ -95,6 +101,14 @@ private data class SwitchMapState(
     val isFinished: Boolean get() = isUpstreamCompleted && (innerObserver == null)
 }
 
+/**
+ * Calls the [mapper] for each element emitted by the [Observable] and subscribes to the returned inner [Observable],
+ * disposing any previously subscribed inner [Observable].
+ * For each element [U] emitted by a most recent inner [Observable], calls [resultSelector] with the original source element [T]
+ * and the inner element [U], and emits the result element [R].
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#switchMap-io.reactivex.functions.Function-).
+ */
 fun <T, U, R> Observable<T>.switchMap(
     mapper: (T) -> Observable<U>,
     resultSelector: (T, U) -> R

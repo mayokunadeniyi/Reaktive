@@ -1,6 +1,6 @@
 # <img src="https://raw.githubusercontent.com/badoo/Reaktive/master/assets/logo_reaktive.png" height="36">
 
-[![Download](https://api.bintray.com/packages/badoo/maven/reaktive/images/download.svg)](https://bintray.com/badoo/maven/reaktive/_latestVersion)
+[![Maven Central](https://img.shields.io/maven-central/v/com.badoo.reaktive/reaktive?color=blue)](https://search.maven.org/artifact/com.badoo.reaktive/reaktive)
 [![Build Status](https://github.com/badoo/Reaktive/workflows/Build/badge.svg?branch=master)](https://github.com/badoo/Reaktive/actions)
 [![License](https://img.shields.io/badge/License-Apache/2.0-blue.svg)](https://github.com/badoo/Reaktive/blob/master/LICENSE)
 [![kotlinlang|reaktive](https://img.shields.io/badge/kotlinlang-reaktive-blue?logo=slack)](https://kotlinlang.slack.com/archives/CU05HB31A)
@@ -14,16 +14,7 @@ Should you have any questions or feedback welcome to the **Kotlin Slack channel*
 Recommended minimum Gradle version is 5.3. Please read first the documentation about
 [metadata publishing mode](https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html#experimental-metadata-publishing-mode).
 
-Add Bintray repository into your root build.gradle file:
-```groovy
-repositories {
-    maven {
-        url  "https://dl.bintray.com/badoo/maven"
-    }
-}
-```
-
-There are a number of modules published:
+There are a number of modules published to Maven Central:
 - `reaktive` - the main Reaktive library (multiplatform)
 - `reaktive-annotations` - collection of annotations (mutiplatform)
 - `reaktive-testing` - testing utilities (multiplatform)
@@ -192,13 +183,18 @@ observable<Any> { emitter ->
 
 In both cases subscription (`subscribe` call) **must** be performed on the Main thread.
 
-#### Coroutines interop
-Another important thing to keep in mind is the interop with coroutines provided by the `coroutines-interop` module.
-This also has a few important limitations:
-- Neither `Job` nor `CoroutineContext` can be frozen (until release of the [multithreaded coroutines](https://github.com/Kotlin/kotlinx.coroutines/pull/1648))
-- Because of the first limitation all `xxxFromCoroutine {}` builders in Kotlin/Native are executed inside a `runBlocking` block and should be subscribed on a background `Scheduler`
-- Ktor does not work well in multithreaded environment in Kotlin/Native (it may crash), so please don't mix Ktor and `coroutines-interop`
-- Converters `Scheduler.asCoroutineDispatcher()` and `CoroutineContext.asScheduler()` are available only in JVM and JS
+### Coroutines interop
+
+This functionality is provided by the `coroutines-interop` module which is published in two versions:
+- `coroutines-interop:<version>` is based on stable `kotlinx.coroutines`
+- `coroutines-interop:<version>-nmtc` is based on [work-in-progress](https://github.com/Kotlin/kotlinx.coroutines/pull/1648) multi-threaded `kotlinx.coroutines`
+
+#### Coroutines interop based on stable kotlinx.coroutines
+
+There are few important limitations:
+- Neither `Job` nor `CoroutineContext` can be frozen (until release of the multi-threaded coroutines).
+- Because of the first limitation all `xxxFromCoroutine {}` builders and `Flow.asObservable()` converter are executed inside `runBlocking` block in Kotlin/Native and should be subscribed on a background `Scheduler`.
+- Ktor does not work well in multithreaded environment in Kotlin/Native (it may crash), so please don't mix Ktor and "stable" `coroutines-interop`.
 
 Consider the following example for `corutines-interop`:
 ```kotlin
@@ -231,6 +227,22 @@ fun <T> singleFromCoroutineUnsafe(mainContext: CoroutineContext, block: suspend 
 ```
 
 Now you can use this function together with Ktor but make sure you are doing this always on Main thread, neither `subscribeOn` nor `observeOn` nor any other thread switch are allowed.
+
+#### Coroutines interop based on multi-threaded kotlinx.coroutines
+
+The multi-threaded `kotlinx.coroutines` variant lifts some unpleasant restrictions: 
+- Both `Job` and `CoroutineContext` can be frozen.
+
+So there is one crucial difference:
+- All `xxxFromCoroutine {}` builders and `Flow.asObservable()` converter are executed asynchronously in all targets (including Kotlin/Native), so can be subscribed on any scheduler.
+
+Limitations:
+- Because multi-threaded coroutines are work-in-progress, there are possible [issues](https://github.com/Kotlin/kotlinx.coroutines/blob/native-mt/kotlin-native-sharing.md#known-problems).
+- Ktor can be used out of the box, but still can not be frozen, so main thread only.
+
+##### Coroutines interop general limitations
+
+Converters `Scheduler.asCoroutineDispatcher()` and `CoroutineContext.asScheduler()` are available only in JVM and JS currently.
 
 ### Subscription management with DisposableScope
 
@@ -289,39 +301,9 @@ class MyActivity : AppCompatActivity(), DisposableScope by DisposableScope() {
 }
 ```
 
-### Sharing Reaktive streams with iOS Swift
-Unlike coroutines Reaktive streams can be directly used from Swift. But since generics for interfaces 
-are [not exported to Swift](https://kotlinlang.org/docs/reference/native/objc_interop.html#generics), 
-Reaktive provides a workaround.
+### Reaktive and Swift interoperability
 
-You can wrap any Reaktive stream into a `Wrapper` class:
-```kotlin
-class SharedDataSource {
-    fun load(): SingleWrapper<String> =
-        singleFromFunction { 
-            // A long running operation
-            "A result"
-        }
-            .subscribeOn(ioScheduler)
-            .observeOn(mainScheduler)
-            .wrap()
-}
-```
-
-Now if you [enable Objective-C generics](https://kotlinlang.org/docs/reference/native/objc_interop.html#to-use) 
-you will be able to use it from Swift:
-```swift
-let dataSource = SharedDataSource()
-
-let disposable = dataSource
-    .load()
-    .subscribe(isThreadLocal: false, onSubscribe: nil, onError: nil) { (value: NSString) in print(value) }
-       
-    // At some point later
-    disposable.dispose()
-```
-
-`Wrappers` are available for `Observable`, `Single`, `Maybe` and `Completable`.  
+Please see the corresponding documentation page: [Reaktive and Swift interoperability](docs/SwiftInterop.md).
 
 ### Samples:
 * [MPP module](https://github.com/badoo/Reaktive/tree/master/sample-mpp-module)

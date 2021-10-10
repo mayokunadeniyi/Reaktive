@@ -9,39 +9,45 @@ import com.badoo.reaktive.base.tryCatch
 import com.badoo.reaktive.completable.CompletableCallbacks
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
-import com.badoo.reaktive.disposable.DisposableWrapper
+import com.badoo.reaktive.disposable.SerialDisposable
 import com.badoo.reaktive.disposable.doIfNotDisposed
 import com.badoo.reaktive.disposable.plusAssign
 import com.badoo.reaktive.utils.handleReaktiveError
 
+/**
+ * Calls the shared [action] for each new observer with the [Disposable] sent to the downstream.
+ * The [action] is called for each new observer **before** its `onSubscribe` callback is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doOnSubscribe-io.reactivex.functions.Consumer-).
+ */
 fun <T> Observable<T>.doOnBeforeSubscribe(action: (Disposable) -> Unit): Observable<T> =
     observableUnsafe { observer ->
-        val disposableWrapper = DisposableWrapper()
+        val serialDisposable = SerialDisposable()
 
         try {
-            action(disposableWrapper)
+            action(serialDisposable)
         } catch (e: Throwable) {
-            observer.onSubscribe(disposableWrapper)
+            observer.onSubscribe(serialDisposable)
             observer.onError(e)
-            disposableWrapper.dispose()
+            serialDisposable.dispose()
 
             return@observableUnsafe
         }
 
-        observer.onSubscribe(disposableWrapper)
+        observer.onSubscribe(serialDisposable)
 
         subscribeSafe(
             object : ObservableObserver<T>, ValueCallback<T> by observer {
                 override fun onSubscribe(disposable: Disposable) {
-                    disposableWrapper.set(disposable)
+                    serialDisposable.set(disposable)
                 }
 
                 override fun onComplete() {
-                    disposableWrapper.doIfNotDisposed(dispose = true, block = observer::onComplete)
+                    serialDisposable.doIfNotDisposed(dispose = true, block = observer::onComplete)
                 }
 
                 override fun onError(error: Throwable) {
-                    disposableWrapper.doIfNotDisposed(dispose = true) {
+                    serialDisposable.doIfNotDisposed(dispose = true) {
                         observer.onError(error)
                     }
                 }
@@ -49,6 +55,12 @@ fun <T> Observable<T>.doOnBeforeSubscribe(action: (Disposable) -> Unit): Observa
         )
     }
 
+/**
+ * Calls the [consumer] with the emitted value when the [Observable] signals `onNext`.
+ * The [consumer] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doOnNext-io.reactivex.functions.Consumer-).
+ */
 fun <T> Observable<T>.doOnBeforeNext(consumer: (T) -> Unit): Observable<T> =
     observable { emitter ->
         subscribe(
@@ -68,6 +80,12 @@ fun <T> Observable<T>.doOnBeforeNext(consumer: (T) -> Unit): Observable<T> =
         )
     }
 
+/**
+ * Calls the [action] with the emitted value when the [Observable] signals `onComplete`.
+ * The [action] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doOnComplete-io.reactivex.functions.Action-).
+ */
 fun <T> Observable<T>.doOnBeforeComplete(action: () -> Unit): Observable<T> =
     observable { emitter ->
         subscribe(
@@ -85,6 +103,12 @@ fun <T> Observable<T>.doOnBeforeComplete(action: () -> Unit): Observable<T> =
         )
     }
 
+/**
+ * Calls the [consumer] with the emitted [Throwable] when the [Observable] signals `onError`.
+ * The [consumer] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doOnError-io.reactivex.functions.Consumer-).
+ */
 fun <T> Observable<T>.doOnBeforeError(consumer: (Throwable) -> Unit): Observable<T> =
     observable { emitter ->
         subscribe(
@@ -102,6 +126,12 @@ fun <T> Observable<T>.doOnBeforeError(consumer: (Throwable) -> Unit): Observable
         )
     }
 
+/**
+ * Calls the [action] when the [Observable] signals a terminal event: `onComplete` or `onError`.
+ * The [action] is called **before** the observer is called.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doOnTerminate-io.reactivex.functions.Action-).
+ */
 fun <T> Observable<T>.doOnBeforeTerminate(action: () -> Unit): Observable<T> =
     observable { emitter ->
         subscribe(
@@ -125,6 +155,12 @@ fun <T> Observable<T>.doOnBeforeTerminate(action: () -> Unit): Observable<T> =
         )
     }
 
+/**
+ * Calls the shared [action] when the [Disposable] sent to the observer via `onSubscribe` is disposed.
+ * The [action] is called **before** the upstream is disposed.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doOnDispose-io.reactivex.functions.Action-).
+ */
 fun <T> Observable<T>.doOnBeforeDispose(action: () -> Unit): Observable<T> =
     observableUnsafe { observer ->
         val disposables = CompositeDisposable()
@@ -165,6 +201,13 @@ fun <T> Observable<T>.doOnBeforeDispose(action: () -> Unit): Observable<T> =
         )
     }
 
+/**
+ * Calls the [action] when one of the following events occur:
+ * - The [Observable] signals a terminal event: `onComplete` or `onError` (the [action] is called **before** the observer is called).
+ * - The [Disposable] sent to the observer via `onSubscribe` is disposed (the [action] is called **before** the upstream is disposed).
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#doFinally-io.reactivex.functions.Action-).
+ */
 fun <T> Observable<T>.doOnBeforeFinally(action: () -> Unit): Observable<T> =
     observableUnsafe { observer ->
         val disposables = CompositeDisposable()

@@ -4,15 +4,21 @@ import com.badoo.reaktive.base.exceptions.CompositeException
 import com.badoo.reaktive.disposable.CompositeDisposable
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.disposable.plusAssign
-import com.badoo.reaktive.utils.ThreadLocalDisposableHolder
 import com.badoo.reaktive.utils.handleReaktiveError
+import com.badoo.reaktive.utils.isolate.IsolatedReference
 
+/**
+ * Prevents the downstream from [freezing](https://kotlinlang.org/docs/native-immutability.html)
+ * by saving the observer in a thread local storage.
+ *
+ * Please refer to the corresponding Readme [section](https://github.com/badoo/Reaktive#thread-local-tricks-to-avoid-freezing).
+ */
 fun <T> Maybe<T>.threadLocal(): Maybe<T> =
     maybe {
         val disposables = CompositeDisposable()
         it.setDisposable(disposables)
-        val emitterStorage = ThreadLocalDisposableHolder(it)
-        disposables += emitterStorage
+        val emitterRef = IsolatedReference(it)
+        disposables += emitterRef
 
         subscribe(
             object : MaybeObserver<T> {
@@ -34,7 +40,7 @@ fun <T> Maybe<T>.threadLocal(): Maybe<T> =
 
                 private fun getEmitter(existingError: Throwable? = null): MaybeEmitter<T>? =
                     try {
-                        requireNotNull(emitterStorage.get())
+                        emitterRef.getOrThrow()
                     } catch (e: Throwable) {
                         handleReaktiveError(if (existingError == null) e else CompositeException(existingError, e))
                         null

@@ -2,13 +2,18 @@ package com.badoo.reaktive.maybe
 
 import com.badoo.reaktive.base.tryCatch
 import com.badoo.reaktive.disposable.Disposable
-import com.badoo.reaktive.disposable.DisposableWrapper
+import com.badoo.reaktive.disposable.SerialDisposable
 
 // Don't inline at the moment for JS, we had random crashes in JS
+/**
+ * Creates a [Maybe] with manual signalling via [MaybeEmitter].
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Maybe.html#create-io.reactivex.MaybeOnSubscribe-).
+ */
 actual fun <T> maybe(onSubscribe: (emitter: MaybeEmitter<T>) -> Unit): Maybe<T> =
     maybeUnsafe { observer ->
         val emitter =
-            object : DisposableWrapper(), MaybeEmitter<T> {
+            object : SerialDisposable(), MaybeEmitter<T> {
                 override fun setDisposable(disposable: Disposable?) {
                     set(disposable)
                 }

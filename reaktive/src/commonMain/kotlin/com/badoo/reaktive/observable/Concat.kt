@@ -1,42 +1,19 @@
 package com.badoo.reaktive.observable
 
-import com.badoo.reaktive.base.subscribeSafe
-import com.badoo.reaktive.disposable.Disposable
-import com.badoo.reaktive.disposable.DisposableWrapper
-import com.badoo.reaktive.utils.atomic.AtomicInt
-
+/**
+ * Concatenates elements of each [Observable] into a single [Observable] without interleaving them.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#concat-java.lang.Iterable-).
+ */
 fun <T> Iterable<Observable<T>>.concat(): Observable<T> =
-    observableUnsafe { observer ->
-        val disposableWrapper = DisposableWrapper()
-        observer.onSubscribe(disposableWrapper)
+    asObservable()
+        .concatMap { it }
 
-        val sources = toList()
-
-        if (sources.isEmpty()) {
-            observer.onComplete()
-            return@observableUnsafe
-        }
-
-        val sourceIndex = AtomicInt()
-
-        val upstreamObserver =
-            object : ObservableObserver<T>, ObservableCallbacks<T> by observer {
-                override fun onSubscribe(disposable: Disposable) {
-                    disposableWrapper.set(disposable)
-                }
-
-                override fun onComplete() {
-                    sourceIndex
-                        .addAndGet(1)
-                        .let(sources::getOrNull)
-                        ?.subscribeSafe(this)
-                        ?: observer.onComplete()
-                }
-            }
-
-        sources[0].subscribeSafe(upstreamObserver)
-    }
-
+/**
+ * Concatenates elements of each [Observable] into a single [Observable] without interleaving them.
+ *
+ * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#concatArray-io.reactivex.ObservableSource...-).
+ */
 fun <T> concat(vararg sources: Observable<T>): Observable<T> =
     sources
         .asList()
