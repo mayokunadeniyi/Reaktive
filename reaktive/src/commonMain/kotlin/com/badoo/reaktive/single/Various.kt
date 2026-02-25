@@ -1,16 +1,13 @@
 package com.badoo.reaktive.single
 
-import com.badoo.reaktive.annotations.ExperimentalReaktiveApi
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.plugin.onAssembleSingle
-import kotlin.native.concurrent.SharedImmutable
 
 /**
  * ⚠️ Advanced use only: creates an instance of [Single] without any safeguards by calling `onSubscribe` with a [SingleObserver].
  *
  * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Single.html#unsafeCreate-io.reactivex.SingleSource-).
  */
-@OptIn(ExperimentalReaktiveApi::class)
 inline fun <T> singleUnsafe(crossinline onSubscribe: (observer: SingleObserver<T>) -> Unit): Single<T> =
     onAssembleSingle(
         object : Single<T> {
@@ -40,7 +37,6 @@ fun <T> singleOf(value: T): Single<T> =
  */
 fun <T> T.toSingle(): Single<T> = singleOf(this)
 
-@SharedImmutable
 private val singleOfNever by lazy {
     singleUnsafe<Nothing> { observer ->
         observer.onSubscribe(Disposable())

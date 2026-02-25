@@ -4,74 +4,50 @@ on:
   push:
     branches:
       - master
-      - mt-coroutines
   pull_request:
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dkotlin.compiler.execution.strategy=in-process
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [ macOS-latest, ubuntu-latest ]
+        os: [ macos-latest, ubuntu-latest ]
     runs-on: ${{matrix.os}}
     name: Build on ${{matrix.os}}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install Java
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          distribution: 'zulu'
+          java-version: '21'
       - name: Install dependencies
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install libcurl4-openssl-dev libgtk-3-dev nodejs chromium-browser
-      - name: Set up cache
-        uses: actions/cache@v2
+      - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd
+        if: matrix.os == 'macos-latest'
         with:
-          path: ~/.gradle/caches
-          key: ${{ matrix.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ matrix.os }}-gradle-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-      - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: >
-          ./gradlew
-          build
-          linkDebugTestLinuxArm32Hfp
-          -Ptarget=all_linux_hosted
-      - name: Test linuxArm32Hfp
-        if: matrix.os == 'ubuntu-latest'
-        uses: uraimo/run-on-arch-action@v2.0.5
+          xcode-version: '16.2'
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          arch: armv7
-          distro: ubuntu20.04
-          run: |
-            ./utils/build/bin/linuxArm32Hfp/debugTest/test.kexe
-            ./reaktive/build/bin/linuxArm32Hfp/debugTest/test.kexe
-            ./reaktive-testing/build/bin/linuxArm32Hfp/debugTest/test.kexe
-      - name: Build macOS
-        if: matrix.os == 'macOS-latest'
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Build
+        run: ./gradlew build publishToMavenLocal
+      # Do not invoke from Gradle, it creates a circular dependency (Gradle invokes XCode invokes Gradle).
+      - name: Build iOS app
+        if: matrix.os == 'macos-latest'
+        working-directory: sample-ios-app
         run: >
-          ./gradlew
-          :reaktive-annotations:build
-          :utils:build
-          :reaktive-testing:build
-          :reaktive:build
-          :coroutines-interop:build
-          :sample-mpp-module:build
-          :sample-ios-app:build
-          :sample-macos-app:build
-          -Ptarget=all_macos_hosted
+          xcodebuild
+          -project sample-ios-app.xcodeproj
+          -scheme "sample-ios-app"
+          -sdk "iphonesimulator"
+          -arch "arm64"
       - name: Bundle the build report
         if: failure()
         run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
       - name: Upload the build report
         if: failure()
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: error-report
           path: build-reports.zip

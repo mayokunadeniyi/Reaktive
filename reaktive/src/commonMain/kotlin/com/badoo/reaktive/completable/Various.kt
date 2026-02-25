@@ -1,16 +1,13 @@
 package com.badoo.reaktive.completable
 
-import com.badoo.reaktive.annotations.ExperimentalReaktiveApi
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.plugin.onAssembleCompletable
-import kotlin.native.concurrent.SharedImmutable
 
 /**
  * ⚠️ Advanced use only: creates an instance of [Completable] without any safeguards by calling `onSubscribe` with a [CompletableObserver].
  *
  * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Completable.html#unsafeCreate-io.reactivex.CompletableSource-).
  */
-@OptIn(ExperimentalReaktiveApi::class)
 inline fun completableUnsafe(crossinline onSubscribe: (observer: CompletableObserver) -> Unit): Completable =
     onAssembleCompletable(
         object : Completable {
@@ -40,7 +37,6 @@ fun completableOfError(error: Throwable): Completable =
  */
 fun Throwable.toCompletableOfError(): Completable = completableOfError(this)
 
-@SharedImmutable
 private val completableOfEmpty by lazy {
     completableUnsafe { observer ->
         val disposable = Disposable()
@@ -59,7 +55,6 @@ private val completableOfEmpty by lazy {
  */
 fun completableOfEmpty(): Completable = completableOfEmpty
 
-@SharedImmutable
 private val completableOfNever by lazy {
     completableUnsafe { observer ->
         observer.onSubscribe(Disposable())

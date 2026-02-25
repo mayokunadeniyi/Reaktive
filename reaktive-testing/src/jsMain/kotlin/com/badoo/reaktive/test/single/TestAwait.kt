@@ -1,15 +1,15 @@
 package com.badoo.reaktive.test.single
 
 import com.badoo.reaktive.single.Single
-import com.badoo.reaktive.single.asPromise
 import com.badoo.reaktive.single.doOnBeforeSuccess
 import com.badoo.reaktive.single.map
 import com.badoo.reaktive.single.onErrorReturn
+import com.badoo.reaktive.single.subscribe
 
-actual fun <T> Single<T>.testAwait(assertError: ((Throwable) -> Unit)?, assertSuccess: (T) -> Unit): dynamic =
+actual fun <T> Single<T>.testAwait(assertError: ((Throwable) -> Unit)?, assertSuccess: (T) -> Unit): AsyncTestResult =
     if (assertError == null) {
         doOnBeforeSuccess(assertSuccess)
-            .asPromise()
+            .asTestResult()
     } else {
         map { TestAwaitResult.Success(it) }
             .onErrorReturn { TestAwaitResult.Error(it) }
@@ -19,7 +19,15 @@ actual fun <T> Single<T>.testAwait(assertError: ((Throwable) -> Unit)?, assertSu
                     is TestAwaitResult.Error -> assertError(result.error)
                 }
             }
-            .asPromise()
+            .asTestResult()
+    }
+
+private fun <T> Single<T>.asTestResult(): AsyncTestResult =
+    AsyncTestResult { resolve, reject ->
+        subscribe(
+            onSuccess = { resolve(Unit) },
+            onError = reject,
+        )
     }
 
 private sealed class TestAwaitResult<out T> {

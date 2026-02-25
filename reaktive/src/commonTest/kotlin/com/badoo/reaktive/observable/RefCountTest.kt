@@ -2,13 +2,11 @@ package com.badoo.reaktive.observable
 
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.test.base.assertError
+import com.badoo.reaktive.test.observable.DefaultObservableObserver
 import com.badoo.reaktive.test.observable.TestObservableObserver
 import com.badoo.reaktive.test.observable.assertComplete
 import com.badoo.reaktive.test.observable.assertValues
 import com.badoo.reaktive.test.observable.test
-import com.badoo.reaktive.utils.SharedList
-import com.badoo.reaktive.utils.atomic.AtomicBoolean
-import com.badoo.reaktive.utils.atomic.AtomicInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,59 +16,59 @@ class RefCountTest {
 
     @Test
     fun does_not_connect_WHEN_not_subscribed() {
-        val isConnected = AtomicBoolean()
-        val upstream = testUpstream(connect = { isConnected.value = true })
+        var isConnected = false
+        val upstream = testUpstream(connect = { isConnected = true })
 
         upstream.refCount(subscriberCount = 1)
 
-        assertFalse(isConnected.value)
+        assertFalse(isConnected)
     }
 
     @Test
     fun connects_to_upstream_WHEN_subscriber_count_1_is_reached() {
-        val isConnected = AtomicBoolean()
-        val upstream = testUpstream(connect = { isConnected.value = true })
+        var isConnected = false
+        val upstream = testUpstream(connect = { isConnected = true })
         val refCount = upstream.refCount(subscriberCount = 1)
 
         refCount.test()
 
-        assertTrue(isConnected.value)
+        assertTrue(isConnected)
     }
 
     @Test
     fun does_not_connect_WHEN_subscriber_count_2_is_not_reached() {
-        val isConnected = AtomicBoolean()
-        val upstream = testUpstream(connect = { isConnected.value = true })
+        var isConnected = false
+        val upstream = testUpstream(connect = { isConnected = true })
         val refCount = upstream.refCount(subscriberCount = 2)
 
         refCount.test()
 
-        assertFalse(isConnected.value)
+        assertFalse(isConnected)
     }
 
     @Test
     fun connects_to_upstream_WHEN_subscriber_count_2_is_reached() {
-        val isConnected = AtomicBoolean()
-        val upstream = testUpstream(connect = { isConnected.value = true })
+        var isConnected = false
+        val upstream = testUpstream(connect = { isConnected = true })
         val refCount = upstream.refCount(subscriberCount = 2)
 
         refCount.test()
         refCount.test()
 
-        assertTrue(isConnected.value)
+        assertTrue(isConnected)
     }
 
     @Test
     fun does_not_connect_second_time_WHEN_subscriberCount_is_1_and_subscribed_second_time() {
-        val isConnected = AtomicBoolean()
-        val upstream = testUpstream(connect = { isConnected.value = true })
+        var isConnected: Boolean
+        val upstream = testUpstream(connect = { isConnected = true })
         val refCount = upstream.refCount(subscriberCount = 1)
         refCount.test()
 
-        isConnected.value = false
+        isConnected = false
         refCount.test()
 
-        assertFalse(isConnected.value)
+        assertFalse(isConnected)
     }
 
     @Test
@@ -80,6 +78,40 @@ class RefCountTest {
         val observer = upstream.refCount(subscriberCount = 1).test()
 
         observer.dispose()
+
+        assertTrue(disposable.isDisposed)
+    }
+
+    @Test
+    fun connects_to_upstream_WHEN_subscriberCount_is_1_and_subscribed_and_disposed_in_onSubscribe() {
+        var isConnected = false
+        val upstream = testUpstream(connect = { isConnected = true })
+        val refCount = upstream.refCount(subscriberCount = 1)
+
+        refCount.subscribe(
+            object : DefaultObservableObserver<Int?> {
+                override fun onSubscribe(disposable: Disposable) {
+                    disposable.dispose()
+                }
+            }
+        )
+
+        assertTrue(isConnected)
+    }
+
+    @Test
+    fun disconnects_from_upstream_WHEN_subscriberCount_is_1_and_subscribed_and_disposed_in_onSubscribe() {
+        val disposable = Disposable()
+        val upstream = testUpstream(connect = { onConnect -> onConnect?.invoke(disposable) })
+        val refCount = upstream.refCount(subscriberCount = 1)
+
+        refCount.subscribe(
+            object : DefaultObservableObserver<Int?> {
+                override fun onSubscribe(disposable: Disposable) {
+                    disposable.dispose()
+                }
+            }
+        )
 
         assertTrue(disposable.isDisposed)
     }
@@ -112,8 +144,37 @@ class RefCountTest {
     }
 
     @Test
+    fun does_not_disconnect_WHEN_connected_and_new_observer_disposed_synchronously_on_emission() {
+        val disposable = Disposable()
+        val upstream =
+            testUpstream(
+                connect = { onConnect -> onConnect?.invoke(disposable) },
+                subscribe = { observer ->
+                    observer.onSubscribe(Disposable())
+                    observer.onNext(1)
+                }
+            )
+        val refCount = upstream.refCount(subscriberCount = 1)
+        refCount.test() // First subscription
+        refCount.subscribe(
+            object : DefaultObservableObserver<Int?> {
+                private var disposableRef: Disposable? = null
+
+                override fun onSubscribe(disposable: Disposable) {
+                    disposableRef = disposable
+                }
+
+                override fun onNext(value: Int?) {
+                    requireNotNull(disposableRef).dispose()
+                }
+            }
+        )
+        assertFalse(disposable.isDisposed)
+    }
+
+    @Test
     fun subscription_to_upstream_happens_before_connection_to_upstream() {
-        val events = SharedList<String>()
+        val events = ArrayList<String>()
         val upstream = testUpstream(connect = { events += "connect" }, subscribe = { events += "subscribe" })
         val refCount = upstream.refCount(subscriberCount = 1)
 
@@ -124,18 +185,18 @@ class RefCountTest {
 
     @Test
     fun subscribes_to_upstream_for_each_subscription_from_downstream() {
-        val subscribeCount = AtomicInt()
-        val upstream = testUpstream(subscribe = { subscribeCount.addAndGet(1) })
+        var subscribeCount = 0
+        val upstream = testUpstream(subscribe = { subscribeCount++ })
         val refCount = upstream.refCount()
 
         repeat(3) { refCount.test() }
 
-        assertEquals(3, subscribeCount.value)
+        assertEquals(3, subscribeCount)
     }
 
     @Test
     fun unsubscribes_from_upstream_for_each_unsubscribe_by_downstream() {
-        val upstreamDisposables = SharedList<Disposable>()
+        val upstreamDisposables = ArrayList<Disposable>()
 
         val upstream =
             testUpstream(
@@ -158,7 +219,7 @@ class RefCountTest {
 
     @Test
     fun delivers_all_values_in_original_order_to_all_subscribes() {
-        val upstreamObservers = SharedList<ObservableObserver<Int?>>()
+        val upstreamObservers = ArrayList<ObservableObserver<Int?>>()
         val upstream = testUpstream(subscribe = { upstreamObservers.add(it) })
         val refCount = upstream.refCount(subscriberCount = 2)
         val downstreamObservers = listOf(refCount.test(), refCount.test())
@@ -174,7 +235,7 @@ class RefCountTest {
 
     @Test
     fun delivers_completion_to_all_subscribes() {
-        val upstreamObservers = SharedList<ObservableObserver<Int?>>()
+        val upstreamObservers = ArrayList<ObservableObserver<Int?>>()
         val upstream = testUpstream(subscribe = { upstreamObservers.add(it) })
         val refCount = upstream.refCount(subscriberCount = 2)
         val downstreamObservers = listOf(refCount.test(), refCount.test())
@@ -188,7 +249,7 @@ class RefCountTest {
 
     @Test
     fun delivers_error_to_all_subscribes() {
-        val upstreamObservers = SharedList<ObservableObserver<Int?>>()
+        val upstreamObservers = ArrayList<ObservableObserver<Int?>>()
         val upstream = testUpstream(subscribe = { upstreamObservers.add(it) })
         val refCount = upstream.refCount(subscriberCount = 2)
         val downstreamObservers = listOf(refCount.test(), refCount.test())

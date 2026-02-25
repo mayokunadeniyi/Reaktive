@@ -1,6 +1,7 @@
 package com.badoo.reaktive.disposable
 
-import kotlin.jvm.Volatile
+import com.badoo.reaktive.utils.synchronizedCompat
+import kotlin.concurrent.Volatile
 
 /**
  * Thread-safe collection of [Disposable]
@@ -9,16 +10,17 @@ import kotlin.jvm.Volatile
 actual open class CompositeDisposable actual constructor() : Disposable {
 
     private var collection: MutableCollection<Disposable>? = null
+
     @Volatile
     private var _isDisposed = false
-    override val isDisposed: Boolean get() = _isDisposed
+    actual override val isDisposed: Boolean get() = _isDisposed
 
     /**
      * Atomically disposes the collection and all its [Disposable]s.
      * All future [Disposable]s will be immediately disposed.
      */
     actual override fun dispose() {
-        synchronized(this) {
+        synchronizedCompat(this) {
             _isDisposed = true
             resetDisposables()
         }
@@ -32,7 +34,7 @@ actual open class CompositeDisposable actual constructor() : Disposable {
      * @return true if [Disposable] was added to the collection, false otherwise
      */
     actual fun add(disposable: Disposable): Boolean {
-        synchronized(this) {
+        synchronizedCompat(this) {
             if (!_isDisposed) {
                 ensureCollection() += disposable
 
@@ -68,7 +70,7 @@ actual open class CompositeDisposable actual constructor() : Disposable {
      */
     actual fun remove(disposable: Disposable, dispose: Boolean): Boolean {
         val result =
-            synchronized(this) {
+            synchronizedCompat(this) {
                 collection?.remove(disposable) ?: false
             }
 
@@ -85,7 +87,7 @@ actual open class CompositeDisposable actual constructor() : Disposable {
      * @param dispose if true then removed [Disposable]s will be disposed, default value is true
      */
     actual fun clear(dispose: Boolean) {
-        synchronized(this, ::resetDisposables)
+        synchronizedCompat(this, ::resetDisposables)
             ?.takeIf { dispose }
             ?.forEach(Disposable::dispose)
     }
@@ -94,7 +96,7 @@ actual open class CompositeDisposable actual constructor() : Disposable {
      * Atomically removes already disposed [Disposable]s
      */
     actual fun purge() {
-        synchronized(this) {
+        synchronizedCompat(this) {
             collection?.removeAll(Disposable::isDisposed)
         }
     }

@@ -1,12 +1,11 @@
 package com.badoo.reaktive.test.base
 
-import com.badoo.reaktive.utils.printStack
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import com.badoo.reaktive.test.assert.assertEquals
+import com.badoo.reaktive.test.assert.assertFalse
+import com.badoo.reaktive.test.assert.assertNotNull
+import com.badoo.reaktive.test.assert.assertNull
+import com.badoo.reaktive.test.assert.assertTrue
+import com.badoo.reaktive.test.assert.fail
 
 fun <T : TestObserver> T.assertError(): T {
     assertTrue(isError, "Source did not fail")
@@ -22,7 +21,7 @@ fun <T : TestObserver> T.assertError(expectedError: Throwable): T {
         try {
             assertEquals(expectedError, error, "Source error does not match, the actual error is printed above")
         } catch (e: AssertionError) {
-            error.printStack()
+            error.printStackTrace()
             throw e
         }
     }
@@ -38,7 +37,7 @@ fun <T : TestObserver> T.assertError(predicate: (Throwable) -> Boolean): T {
         try {
             assertTrue(predicate(error), "Source error does not match the predicate, the actual error is printed above")
         } catch (e: AssertionError) {
-            error.printStack()
+            error.printStackTrace()
             throw e
         }
     }
@@ -48,7 +47,7 @@ fun <T : TestObserver> T.assertError(predicate: (Throwable) -> Boolean): T {
 
 fun <T : TestObserver> T.assertNotError(): T {
     error?.also {
-        it.printStack()
+        it.printStackTrace()
         fail("Source failed, the actual error is printed above")
     }
 

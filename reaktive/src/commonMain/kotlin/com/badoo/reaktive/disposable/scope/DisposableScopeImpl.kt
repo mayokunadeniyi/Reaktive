@@ -20,21 +20,19 @@ internal class DisposableScopeImpl : DisposableScope, CompositeDisposable() {
         return this
     }
 
-    override fun <T> T.scope(dispose: (T) -> Unit): T {
-        Disposable { dispose(this) }.scope()
+    override fun <T> T.scope(onDispose: (T) -> Unit): T {
+        Disposable { onDispose(this) }.scope()
 
         return this
     }
 
     override fun <T> Observable<T>.subscribeScoped(
-        isThreadLocal: Boolean,
         onSubscribe: ((Disposable) -> Unit)?,
         onError: ((Throwable) -> Unit)?,
         onComplete: (() -> Unit)?,
         onNext: ((T) -> Unit)?
     ): Disposable =
         subscribe(
-            isThreadLocal = isThreadLocal,
             onSubscribe = onSubscribe,
             onError = onError,
             onComplete = onComplete,
@@ -43,13 +41,11 @@ internal class DisposableScopeImpl : DisposableScope, CompositeDisposable() {
             .scope()
 
     override fun <T> Single<T>.subscribeScoped(
-        isThreadLocal: Boolean,
         onSubscribe: ((Disposable) -> Unit)?,
         onError: ((Throwable) -> Unit)?,
         onSuccess: ((T) -> Unit)?
     ): Disposable =
         subscribe(
-            isThreadLocal = isThreadLocal,
             onSubscribe = onSubscribe,
             onError = onError,
             onSuccess = onSuccess
@@ -57,14 +53,12 @@ internal class DisposableScopeImpl : DisposableScope, CompositeDisposable() {
             .scope()
 
     override fun <T> Maybe<T>.subscribeScoped(
-        isThreadLocal: Boolean,
         onSubscribe: ((Disposable) -> Unit)?,
         onError: ((Throwable) -> Unit)?,
         onComplete: (() -> Unit)?,
         onSuccess: ((T) -> Unit)?
     ): Disposable =
         subscribe(
-            isThreadLocal = isThreadLocal,
             onSubscribe = onSubscribe,
             onError = onError,
             onComplete = onComplete,
@@ -73,13 +67,11 @@ internal class DisposableScopeImpl : DisposableScope, CompositeDisposable() {
             .scope()
 
     override fun Completable.subscribeScoped(
-        isThreadLocal: Boolean,
         onSubscribe: ((Disposable) -> Unit)?,
         onError: ((Throwable) -> Unit)?,
         onComplete: (() -> Unit)?
     ): Disposable =
         subscribe(
-            isThreadLocal = isThreadLocal,
             onSubscribe = onSubscribe,
             onError = onError,
             onComplete = onComplete

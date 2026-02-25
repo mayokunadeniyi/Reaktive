@@ -1,16 +1,13 @@
 package com.badoo.reaktive.observable
 
-import com.badoo.reaktive.annotations.ExperimentalReaktiveApi
 import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.plugin.onAssembleObservable
-import kotlin.native.concurrent.SharedImmutable
 
 /**
  * ⚠️ Advanced use only: creates an instance of [Observable] without any safeguards by calling `onSubscribe` with an [ObservableObserver].
  *
  * Please refer to the corresponding RxJava [document](http://reactivex.io/RxJava/javadoc/io/reactivex/Observable.html#unsafeCreate-io.reactivex.ObservableSource-).
  */
-@OptIn(ExperimentalReaktiveApi::class)
 inline fun <T> observableUnsafe(crossinline onSubscribe: (observer: ObservableObserver<T>) -> Unit): Observable<T> =
     onAssembleObservable(
         object : Observable<T> {
@@ -107,7 +104,6 @@ fun <T> observableOfError(error: Throwable): Observable<T> =
  */
 fun <T> Throwable.toObservableOfError(): Observable<T> = observableOfError(this)
 
-@SharedImmutable
 private val observableOfEmpty by lazy {
     observableUnsafe<Nothing> { observer ->
         val disposable = Disposable()
@@ -126,7 +122,6 @@ private val observableOfEmpty by lazy {
  */
 fun <T> observableOfEmpty(): Observable<T> = observableOfEmpty
 
-@SharedImmutable
 private val observableOfNever by lazy {
     observableUnsafe<Nothing> { observer ->
         observer.onSubscribe(Disposable())

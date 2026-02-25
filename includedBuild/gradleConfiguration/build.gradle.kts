@@ -1,26 +1,23 @@
-import com.badoo.reaktive.dependencies.Deps
-
 plugins {
     `kotlin-dsl`
     `java-gradle-plugin`
-    id("dependencies")
 }
 
 repositories {
     google()
-    jcenter()
+    mavenCentral()
     gradlePluginPortal()
 }
 
 dependencies {
-    implementation(Deps.kotlin.plugin)
-    implementation(Deps.kotlin.compilerEmbeddable)
-    implementation(Deps.android.plugin)
-    implementation(Deps.jmh.plugin)
-    implementation(Deps.detekt.plugin)
-    implementation(Deps.shadow)
-    implementation(Deps.kotlinx.compatibility)
-    implementation("com.badoo.reaktive.dependencies:dependencies:SNAPSHOT")
+    implementation(libs.kotlin.plugin)
+    implementation(libs.android.plugin)
+    implementation(libs.jmh.plugin)
+    implementation(libs.detekt.plugin)
+    implementation(libs.shadow)
+    implementation(libs.kotlinx.compatibility)
+    implementation(libs.publish.plugin)
+    implementation(libs.dokka.plugin)
 }
 
 gradlePlugin {

@@ -4,18 +4,18 @@ import com.badoo.reaktive.disposable.Disposable
 import com.badoo.reaktive.maybe.maybeOf
 import com.badoo.reaktive.maybe.maybeOfEmpty
 import com.badoo.reaktive.maybe.maybeUnsafe
+import com.badoo.reaktive.observable.repeatWhen
 import com.badoo.reaktive.test.base.assertError
 import com.badoo.reaktive.test.maybe.TestMaybe
+import com.badoo.reaktive.test.observable.TestObservable
 import com.badoo.reaktive.test.observable.assertComplete
 import com.badoo.reaktive.test.observable.assertValues
 import com.badoo.reaktive.test.observable.test
 import com.badoo.reaktive.test.single.TestSingle
-import com.badoo.reaktive.utils.atomic.AtomicInt
-import com.badoo.reaktive.utils.atomic.atomicList
-import com.badoo.reaktive.utils.atomic.plusAssign
 import kotlin.math.max
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 
 class RepeatWhenTest : SingleToObservableTests by SingleToObservableTestsImpl({ repeatWhen { _, _ -> maybeOfEmpty<Unit>() } }) {
 
@@ -36,11 +36,11 @@ class RepeatWhenTest : SingleToObservableTests by SingleToObservableTestsImpl({ 
 
     @Test
     fun emits_all_values_from_all_observers_in_order_WHEN_upstream_and_handler_are_synchronous() {
-        val number = AtomicInt()
+        var number = 0
         val upstream =
             singleUnsafe<Int?> { observer ->
                 observer.onSubscribe(Disposable())
-                observer.onSuccess(number.addAndGet(1))
+                observer.onSuccess(++number)
             }
 
         val observer =
@@ -62,15 +62,15 @@ class RepeatWhenTest : SingleToObservableTests by SingleToObservableTestsImpl({ 
 
     @Test
     fun does_not_subscribe_to_upstream_recursively() {
-        val subscribeCounter = AtomicInt()
-        val maxSubscribers = AtomicInt()
+        var subscribeCounter = 0
+        var maxSubscribers = 0
         val upstream =
             singleUnsafe<Int?> { observer ->
-                subscribeCounter.addAndGet(1)
-                maxSubscribers.value = max(maxSubscribers.value, subscribeCounter.value)
+                subscribeCounter++
+                maxSubscribers = max(maxSubscribers, subscribeCounter)
                 observer.onSubscribe(Disposable())
                 observer.onSuccess(0)
-                subscribeCounter.addAndGet(-1)
+                subscribeCounter--
             }
 
         upstream
@@ -86,14 +86,14 @@ class RepeatWhenTest : SingleToObservableTests by SingleToObservableTestsImpl({ 
             }
             .test()
 
-        assertEquals(1, maxSubscribers.value)
+        assertEquals(1, maxSubscribers)
     }
 
     @Test
     fun calls_handler_with_upstream_values() {
         val upstream = TestSingle<Int?>()
         val handlerMaybe = TestMaybe<Unit>()
-        val values = atomicList<Int?>()
+        val values = ArrayList<Int?>()
 
         upstream
             .repeatWhen { _, value ->
@@ -108,7 +108,7 @@ class RepeatWhenTest : SingleToObservableTests by SingleToObservableTestsImpl({ 
         handlerMaybe.onSuccess(Unit)
         upstream.onSuccess(1)
 
-        assertEquals(listOf(0, null, 1), values.value)
+        assertEquals(listOf(0, null, 1), values)
     }
 
     @Test
@@ -175,5 +175,23 @@ class RepeatWhenTest : SingleToObservableTests by SingleToObservableTestsImpl({ 
         upstream.onError(error)
 
         observer.assertError(error)
+    }
+
+    @Test
+    fun predicate_receives_valid_attempt_WHEN_upstream_completes() {
+        val upstream = TestObservable<Int?>()
+        var attemptVar = 0
+
+        upstream
+            .repeatWhen { attempt ->
+                attemptVar = attempt
+                maybeOf(Unit)
+            }
+            .test()
+
+        upstream.onComplete()
+        assertEquals(attemptVar, 1)
+        upstream.onComplete()
+        assertEquals(attemptVar, 2)
     }
 }

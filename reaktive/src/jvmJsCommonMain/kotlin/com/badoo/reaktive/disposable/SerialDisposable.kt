@@ -1,6 +1,7 @@
 package com.badoo.reaktive.disposable
 
-import kotlin.jvm.Volatile
+import com.badoo.reaktive.utils.synchronizedCompat
+import kotlin.concurrent.Volatile
 
 /**
  * Thread-safe container of one [Disposable]
@@ -18,12 +19,14 @@ actual open class SerialDisposable actual constructor() : Disposable {
      * Any future [Disposable] will be immediately disposed.
      */
     actual override fun dispose() {
-        synchronized(this) {
+        clearAndDispose()?.dispose()
+    }
+
+    internal actual fun clearAndDispose(): Disposable? =
+        synchronizedCompat(this) {
             _isDisposed = true
             swapDisposable(null)
         }
-            ?.dispose()
-    }
 
     /**
      * Atomically either replaces any existing [Disposable]
@@ -47,7 +50,7 @@ actual open class SerialDisposable actual constructor() : Disposable {
         var disposableToDispose: Disposable? = null
         var oldDisposable: Disposable? = null
 
-        synchronized(this) {
+        synchronizedCompat(this) {
             if (_isDisposed) {
                 disposableToDispose = disposable
             } else {
